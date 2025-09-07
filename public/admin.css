@@ -1,0 +1,230 @@
+/* Polaroid Wall Admin Dashboard Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #990F4B, #020005);
+  overflow: hidden;
+  height: 100vh;
+  position: relative;
+}
+
+#wall {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.polaroid {
+  position: absolute;
+  width: 200px;
+  height: 250px;
+  padding: 12px;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+  transform: rotate(calc(var(--rot) * 1deg));
+  transition: all 0.3s ease;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+}
+
+.polaroid:hover {
+  transform: rotate(calc(var(--rot) * 1deg)) scale(1.05);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
+  z-index: 10;
+}
+
+.polaroid img {
+  width: 100%;
+  height: 170px;
+  object-fit: cover;
+  border-radius: 6px;
+  background: #f0f0f0;
+}
+
+.polaroid .caption {
+  margin-top: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #333;
+  text-align: center;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  /* -webkit-line-clamp: 2; */
+  -webkit-box-orient: vertical;
+  min-height: 35px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.admin-panel {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(15px);
+  border-radius: 15px;
+  padding: 20px;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  min-width: 300px;
+}
+
+.admin-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+  margin-bottom: 25px;
+}
+
+.stat-item {
+  text-align: center;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 10px;
+  border: 2px solid #e9ecef;
+}
+
+.stat-number {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: #667eea;
+  margin-bottom: 5px;
+}
+
+.stat-label {
+  font-size: 0.8rem;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 600;
+}
+
+.admin-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.admin-btn {
+  padding: 12px 20px;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.admin-btn.primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.admin-btn.primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+}
+
+.admin-btn.secondary {
+  background: #6c757d;
+  color: white;
+}
+
+.admin-btn.secondary:hover {
+  background: #5a6268;
+  transform: translateY(-2px);
+}
+
+.admin-btn.success {
+  background: #28a745;
+  color: white;
+}
+
+.admin-btn.success:hover {
+  background: #218838;
+  transform: translateY(-2px);
+}
+
+.loading {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 1.5rem;
+  z-index: 100;
+}
+
+.status-message {
+  margin-top: 15px;
+  padding: 10px;
+  border-radius: 8px;
+  text-align: center;
+  font-weight: 600;
+  display: none;
+}
+
+.status-message.success {
+  background: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.status-message.error {
+  background: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+@keyframes photoAppear {
+  from {
+    opacity: 0;
+    transform: rotate(calc(var(--rot) * 1deg)) scale(0.3);
+  }
+
+  to {
+    opacity: 1;
+    transform: rotate(calc(var(--rot) * 1deg)) scale(1);
+  }
+}
+
+.polaroid.new {
+  animation: photoAppear 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@media (max-width: 768px) {
+  .admin-panel {
+    position: relative;
+    top: auto;
+    left: auto;
+    margin: 20px;
+    width: calc(100% - 40px);
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

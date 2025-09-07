@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "public"."User" ADD COLUMN     "limit" INTEGER NOT NULL DEFAULT 2,
+ADD COLUMN     "photoCount" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN     "role" TEXT NOT NULL DEFAULT 'user';

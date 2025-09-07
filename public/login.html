@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Polaroid Wall - Login</title>
+  <script src="nav.js" defer></script>
+  <link rel="stylesheet" href="/login.css" />
+</head>
+
+<body>
+  <div class="login-container fade-in">
+    <div class="logo">📸</div>
+    <h1 class="subtitle">Polaroid Wall</h1>
+    <p style="color: #666; margin-bottom: 30px;">Capture and share your moments</p>
+    <button class="btn btn-secondary" id="logoutBtn" style="margin-bottom: 20px; display: none;">Logout</button>
+
+    <div class="input-group">
+      <input type="email" id="email" class="input-field" placeholder="Enter your email" required />
+    </div>
+
+    <button id="sendOtpBtn" class="btn btn-primary">
+      <span id="sendOtpText">Send OTP</span>
+      <span id="sendOtpLoading" class="loading" style="display: none;"></span>
+    </button>
+
+    <div id="otpSection" class="otp-section">
+      <p style="color: #666; margin-bottom: 20px;">Enter the 6-digit code sent to your email</p>
+
+      <div class="otp-input">
+        <input type="text" maxlength="1" class="otp-digit" data-index="0" />
+        <input type="text" maxlength="1" class="otp-digit" data-index="1" />
+        <input type="text" maxlength="1" class="otp-digit" data-index="2" />
+        <input type="text" maxlength="1" class="otp-digit" data-index="3" />
+        <input type="text" maxlength="1" class="otp-digit" data-index="4" />
+        <input type="text" maxlength="1" class="otp-digit" data-index="5" />
+      </div>
+
+      <button id="verifyOtpBtn" class="btn btn-primary">
+        <span id="verifyOtpText">Verify OTP</span>
+        <span id="verifyOtpLoading" class="loading" style="display: none;"></span>
+      </button>
+
+      <button id="resendOtpBtn" class="btn btn-secondary" style="display: none;">
+        Resend OTP
+      </button>
+    </div>
+
+    <div id="status" class="status"></div>
+  </div>
+
+  <script src="/nav.js"></script>
+  <script src="/login.js" defer></script>
+
+</html>

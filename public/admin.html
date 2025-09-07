@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Polaroid Wall - Admin Dashboard</title>
+  <link rel="stylesheet" href="/admin.css" />
+</head>
+
+<body>
+  <div id="wall"></div>
+  <div id="loading" class="loading">Loading photos...</div>
+
+  <div class="admin-panel">
+    <h2 class="admin-title">📊 Admin Dashboard</h2>
+
+    <div class="stats-grid">
+      <div class="stat-item">
+        <div class="stat-number" id="totalPhotos">0</div>
+        <div class="stat-label">Total Photos</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number" id="activeUsers">0</div>
+        <div class="stat-label">Users Online</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number" id="todayPhotos">0</div>
+        <div class="stat-label">Today</div>
+      </div>
+    </div>
+
+    <div class="admin-controls">
+      <button class="admin-btn primary" id="exportBtn">📸 Export High-Res Image</button>
+      <button class="admin-btn secondary" id="refreshBtn">🔄 Refresh Wall</button>
+      <button class="admin-btn success" id="stageBtn">🎭 View Stage</button>
+    </div>
+
+    <div class="status-message" id="statusMessage"></div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/admin.js" defer></script>
+
+</html>

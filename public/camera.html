@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Polaroid Camera - Capture Your Moments</title>
+  <script src="nav.js" defer></script>
+
+  <link rel="stylesheet" href="/camera.css" />
+</head>
+
+<body>
+  <div class="header">
+    <h1>📸 Polaroid Camera</h1>
+    <!-- Navigation bar will be injected by nav.js -->
+    <p>Capture and share your special moments</p>
+    <button class="logout-btn" id="logoutBtn">Logout</button>
+  </div>
+
+  <div class="main-container">
+    <div class="camera-section fade-in">
+      <div class="camera-container">
+        <video id="video" autoplay muted playsinline></video>
+        <div class="camera-overlay" id="cameraOverlay">
+          <div class="message">
+            <div class="loading"></div>
+            <p>Starting camera...</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <div class="input-group">
+          <label for="caption">Photo Caption (Optional)</label>
+          <input type="text" id="caption" class="input-field" placeholder="Add a caption to your photo..."
+            maxlength="100" />
+        </div>
+
+        <div class="filters-section">
+          <div class="filters-title">Photo Filters</div>
+          <div class="filter-options">
+            <div class="filter-option active" data-filter="normal">Normal</div>
+            <div class="filter-option" data-filter="vintage">Vintage</div>
+            <div class="filter-option" data-filter="blackwhite">B&W</div>
+            <div class="filter-option" data-filter="sepia">Sepia</div>
+            <div class="filter-option" data-filter="blur">Blur</div>
+          </div>
+        </div>
+
+        <button id="snapBtn" class="btn btn-primary">
+          <span id="snapText">📸 Take Photo</span>
+          <span id="snapLoading" class="loading" style="display: none;"></span>
+        </button>
+
+        <div class="shots-info">
+          <div class="shots-count" id="shotsCount">2</div>
+          <div class="shots-text" id="shotsText">shots remaining</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="preview-section fade-in">
+      <h2 class="preview-title">Photo Preview</h2>
+
+      <div class="preview-container">
+        <img id="preview" class="preview-image" alt="Photo preview" />
+        <div id="previewPlaceholder" class="preview-placeholder">
+          📸 Take a photo to see preview
+        </div>
+      </div>
+
+      <div class="upload-progress" id="uploadProgress">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+
+      <div class="status-message" id="status"></div>
+
+      <button id="retakeBtn" class="btn btn-secondary" style="display: none; width: 100%; margin-bottom: 15px;">
+        🔄 Retake Photo
+      </button>
+
+      <button id="uploadBtn" class="btn btn-primary" style="display: none; width: 100%;">
+        <span id="uploadText">🚀 Upload Photo</span>
+        <span id="uploadLoading" class="loading" style="display: none;"></span>
+      </button>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/camera.js"></script>
+
+</body>
+
+</html>

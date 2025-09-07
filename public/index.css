@@ -1,0 +1,539 @@
+    :root {
+      --primary-color: #6c63ff;
+      --secondary-color: #4a45b1;
+      --accent-color: #ff6b6b;
+      --text-color: #333;
+      --light-text: #f8f9fa;
+      --light-bg: #f5f7ff;
+      --shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      --transition: all 0.3s ease;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: linear-gradient(135deg, #990F4B, #020005);
+      overflow-x: hidden;
+      position: relative;
+      font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      min-height: 100vh;
+      color: var(--text-color);
+      line-height: 1.6;
+    }
+
+    .header {
+      background: rgba(255, 255, 255, 0.98);
+      backdrop-filter: blur(10px);
+      padding: 1rem 0;
+      box-shadow: var(--shadow);
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .header-content {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .logo i {
+      font-size: 2rem;
+      color: var(--primary-color);
+    }
+
+    .logo h1 {
+      margin: 0;
+      font-size: 1.75rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .tagline {
+      color: #666;
+      font-size: 1.1rem;
+      margin: 0;
+    }
+
+    .main-nav {
+      width: 100%;
+      max-width: 800px;
+    }
+
+    .nav-links {
+      list-style: none;
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      padding: 0;
+      margin: 0;
+    }
+
+    .nav-links li {
+      margin: 0;
+    }
+
+    .nav-buttons {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .nav-btn {
+      padding: 0.7rem 1.5rem;
+      border: none;
+      border-radius: 50px;
+      font-size: 0.95rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: var(--transition);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .nav-btn::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.2);
+      transform: translateX(-100%);
+      transition: transform 0.6s ease;
+    }
+
+    .nav-btn:hover::after {
+      transform: translateX(0);
+    }
+
+    .nav-btn.primary {
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      color: white;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    .nav-btn.primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(108, 99, 255, 0.3);
+    }
+
+    .nav-btn.secondary {
+      background: white;
+      color: var(--text-color);
+      border: 2px solid #e1e5e9;
+      font-weight: 500;
+    }
+
+    .nav-btn.secondary:hover {
+      background: #f8f9ff;
+      border-color: var(--primary-color);
+      transform: translateY(-2px);
+      color: var(--primary-color);
+    }
+
+    .main-content {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      padding-top: 180px;
+      padding-bottom: 2rem;
+    }
+
+    .wall-container {
+      flex: 1;
+      padding: 0 2rem;
+      position: relative;
+      max-width: 1800px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    /* Grid for polaroids */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      grid-auto-rows: 280px;
+      gap: 1.5rem;
+      padding: 1rem 0;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .polaroid {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      padding: 12px;
+      background: white;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      transform: rotate(calc(var(--rot) * 1deg));
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      cursor: pointer;
+      border-radius: 8px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .polaroid:hover {
+      transform: rotate(calc(var(--rot) * 1deg)) scale(1.03);
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
+      z-index: 1;
+    }
+
+    .polaroid img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 4px;
+      flex: 1;
+    }
+
+    .polaroid p {
+      display: none;
+    }
+
+    .polaroid .timestamp {
+      display: none;
+    }
+
+    .polaroid .actions {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      display: flex;
+      gap: 5px;
+    }
+
+    .polaroid:hover .actions {
+      opacity: 1;
+    }
+
+    .action-btn {
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      transition: all 0.3s ease;
+    }
+
+    .action-btn:hover {
+      background: rgba(0, 0, 0, 0.9);
+      transform: scale(1.1);
+    }
+
+    .empty-state {
+      text-align: center;
+      color: white;
+      padding: 100px 20px;
+      font-size: 1.2rem;
+    }
+
+    .empty-state h2 {
+      font-size: 2.5rem;
+      margin-bottom: 20px;
+      opacity: 0.8;
+    }
+
+    .empty-state p {
+      opacity: 0.7;
+      margin-bottom: 30px;
+    }
+
+    .loading-indicator {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+      text-align: center;
+      z-index: 2000;
+    }
+
+    .loading-spinner {
+      width: 50px;
+      height: 50px;
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #667eea;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 20px;
+    }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    @keyframes polaroidAppear {
+      from {
+        opacity: 0;
+        transform: rotate(calc(var(--rot) * 1deg)) scale(0.5);
+      }
+
+      to {
+        opacity: 1;
+        transform: rotate(calc(var(--rot) * 1deg)) scale(1);
+      }
+    }
+
+    .fade-in {
+      animation: fadeIn 0.8s ease;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      padding: 15px 20px;
+      border-radius: 10px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      z-index: 3000;
+      transform: translateX(400px);
+      transition: transform 0.3s ease;
+      max-width: 300px;
+    }
+
+    .notification.show {
+      transform: translateX(0);
+    }
+
+    .notification.success {
+      border-left: 4px solid #28a745;
+    }
+
+    .notification.info {
+      border-left: 4px solid #17a2b8;
+    }
+
+    .notification.error {
+      border-left: 4px solid #dc3545;
+    }
+
+    .notification-title {
+      font-weight: 600;
+      margin-bottom: 5px;
+      color: #333;
+    }
+
+    .notification-message {
+      color: #666;
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 768px) {
+      .header h1 {
+        font-size: 2rem;
+      }
+
+      .nav-buttons {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .nav-btn {
+        width: 200px;
+        justify-content: center;
+      }
+
+      .wall-container {
+        margin-top: 250px;
+        padding: 15px;
+      }
+
+      .polaroid {
+        width: 200px;
+        padding: 12px;
+      }
+
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .header {
+        padding: 15px;
+      }
+
+      .header h1 {
+        font-size: 1.8rem;
+      }
+
+      .wall-container {
+        margin-top: 280px;
+        padding: 10px;
+      }
+
+      .polaroid {
+        width: 180px;
+        padding: 10px;
+      }
+
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* CSS overrides for full-screen wall and overlays */
+    .header {
+      display: none !important;
+    }
+
+    .wall-container {
+      margin-top: 0;
+      padding: 0;
+      min-height: 100vh;
+    }
+
+    #wall {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+    }
+
+    /* Absolute polaroids with fixed cell size */
+    .polaroid {
+      position: absolute;
+      width: 220px;
+      height: 260px;
+      padding: 12px;
+    }
+
+    .polaroid img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 4px;
+    }
+
+    /* Analytics overlay */
+    .analytics-panel {
+      position: fixed;
+      top: 16px;
+      left: 16px;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 12px;
+      padding: 12px 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+      z-index: 2000;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .analytics-grid {
+      display: grid;
+      grid-template-columns: repeat(3, auto);
+      gap: 16px;
+      align-items: center;
+    }
+
+    .analytics-item {
+      text-align: left;
+    }
+
+    .analytics-number {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #667eea;
+    }
+
+    .analytics-label {
+      font-size: 0.8rem;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* Controls overlay */
+    .overlay-controls {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      display: flex;
+      gap: 8px;
+      z-index: 2001;
+    }
+
+    .overlay-btn {
+      padding: 10px 14px;
+      border: 2px solid #e1e5e9;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.95);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .overlay-btn:hover {
+      border-color: #667eea;
+      box-shadow: 0 8px 20px rgba(102, 126, 234, 0.25);
+    }
+
+    .hidden-ui {
+      display: none !important;
+    }

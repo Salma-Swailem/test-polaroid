@@ -1,0 +1,132 @@
+openapi: 3.0.0
+info:
+  title: Savings Backend - Client API
+  version: 1.0.0
+  description: Client API for the Savings Backend application
+servers:
+  - url: http://127.0.0.1:3000
+    description: Development server
+
+paths:
+  /api/auth:
+    post:
+      summary: Register or login a user and send OTP
+      tags:
+        - Auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  example: user@example.com
+      responses:
+        '200':
+          description: OTP sent successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        '400':
+          description: Bad request (missing email)
+        '500':
+          description: Server error
+
+  /api/verify:
+    post:
+      summary: Verify OTP and login
+      tags:
+        - Auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - otp
+              properties:
+                email:
+                  type: string
+                  example: user@example.com
+                otp:
+                  type: string
+                  example: "123456"
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  token:
+                    type: string
+        '400':
+          description: Invalid or expired OTP
+        '500':
+          description: Server error
+          
+  paths:
+  /api/upload:
+    post:
+      summary: Upload a photo to Google Drive
+      tags:
+        - Photos
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: string
+                  description: ID of the user uploading the photo
+                file:
+                  type: string
+                  format: binary
+                  description: Photo file to upload
+              required:
+                - userId
+                - file
+      responses:
+        "200":
+          description: Photo uploaded successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  photo:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      userId:
+                        type: string
+                      driveId:
+                        type: string
+                      link:
+                        type: string
+        "400":
+          description: Bad request (max photos reached or missing file)
+        "500":
+          description: Failed to upload photo

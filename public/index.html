@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Polaroid Wall - A live photo gallery where you can share and view moments in real-time">
+  <title>Polaroid Wall - Live Photo Gallery</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/index.css" />
+  <script src="nav.js" defer></script>
+</head>
+
+<body>
+  <header class="header">
+    <div class="header-content">
+      <div class="logo">
+        <i class="fas fa-camera-retro" aria-hidden="true"></i>
+        <h1>Polaroid Wall</h1>
+      </div>
+      <p class="tagline">Live photo gallery - See moments as they happen</p>
+      <nav class="main-nav" aria-label="Main navigation">
+        <ul class="nav-links">
+          <li><a href="/camera.html" class="nav-btn primary" aria-label="Take a new photo">
+            <i class="fas fa-camera" aria-hidden="true"></i> Take Photo
+          </a></li>
+          <li><a href="/login.html" class="nav-btn secondary" aria-label="Login to your account">
+            <i class="fas fa-sign-in-alt" aria-hidden="true"></i> Login
+          </a></li>
+          <li><button class="nav-btn secondary" id="exportBtn" aria-label="Export gallery">
+            <i class="fas fa-download" aria-hidden="true"></i> Export
+          </button></li>
+          <li><button class="nav-btn secondary" id="logoutBtn" aria-label="Logout">
+            <i class="fas fa-sign-out-alt" aria-hidden="true"></i> Logout
+          </button></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <div id="wall" class="wall-container"></div>
+    
+    <aside class="analytics-panel" id="analytics" aria-label="Gallery Statistics">
+      <h2 class="visually-hidden">Gallery Statistics</h2>
+      <div class="analytics-grid">
+        <div class="analytics-item" aria-labelledby="total-photos-label">
+          <div class="analytics-icon">
+            <i class="fas fa-images" aria-hidden="true"></i>
+          </div>
+          <div class="analytics-content">
+            <div class="analytics-number" id="statTotal" aria-live="polite">0</div>
+            <div class="analytics-label" id="total-photos-label">Total Photos</div>
+          </div>
+        </div>
+        
+        <div class="analytics-item" aria-labelledby="users-online-label">
+          <div class="analytics-icon">
+            <i class="fas fa-users" aria-hidden="true"></i>
+          </div>
+          <div class="analytics-content">
+            <div class="analytics-number" id="statUsers" aria-live="polite">0</div>
+            <div class="analytics-label" id="users-online-label">Users Online</div>
+          </div>
+        </div>
+        
+        <div class="analytics-item" aria-labelledby="photos-today-label">
+          <div class="analytics-icon">
+            <i class="fas fa-calendar-day" aria-hidden="true"></i>
+          </div>
+          <div class="analytics-content">
+            <div class="analytics-number" id="statToday" aria-live="polite">0</div>
+            <div class="analytics-label" id="photos-today-label">Today's Photos</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </main>
+  <div class="overlay-controls" id="controls">
+    <button class="overlay-btn" id="toggleUiBtn">Hide UI</button>
+    <button class="overlay-btn" id="exportBtn">Export</button>
+  </div>
+
+  <div id="loadingIndicator" class="loading-indicator" style="display: none;">
+    <div class="loading-spinner"></div>
+    <p>Loading photos...</p>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/index.js" defer></script>
+
+</html>

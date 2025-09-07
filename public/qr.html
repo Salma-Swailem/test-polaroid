@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Access the Polaroid Wall camera by scanning this QR code with your mobile device">
+  <title>QR Code - Polaroid Wall Camera Access</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/qr.css" />
+  <script src="nav.js" defer></script>
+</head>
+
+<body>
+  <header class="header">
+    <div class="header-content">
+      <div class="logo">
+        <i class="fas fa-camera-retro" aria-hidden="true"></i>
+        <h1>Polaroid Wall</h1>
+      </div>
+      <nav class="header-nav">
+        <a href="/" class="nav-link">Gallery</a>
+        <a href="/camera" class="nav-link active">Camera</a>
+        <a href="/qr" class="nav-link">QR Code</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="qr-container">
+    <div class="qr-content">
+      <div class="qr-header">
+        <h1 class="title">
+          <i class="fas fa-qrcode" aria-hidden="true"></i>
+          Camera Access
+        </h1>
+        <p class="subtitle">Scan this QR code with your mobile device to access the Polaroid Wall camera</p>
+      </div>
+
+      <div class="qr-card">
+        <div class="qr-code-container">
+          <div class="qr-code" aria-label="QR Code for camera access">
+            <canvas class="qr-image" id="qrCanvas"></canvas>
+          </div>
+          <div class="qr-loading" id="qrLoading">
+            <div class="loading-spinner"></div>
+            <p>Generating QR code...</p>
+          </div>
+        </div>
+
+        <div class="url-info">
+          <div class="url-text" id="cameraUrl">Loading camera URL...</div>
+          <button class="copy-btn" id="copyBtn" aria-label="Copy URL to clipboard">
+            <i class="far fa-copy"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="instructions-card">
+        <h2 class="instructions-title">
+          <i class="fas fa-mobile-alt" aria-hidden="true"></i>
+          How to use
+        </h2>
+        <ol class="steps-list">
+          <li class="step">
+            <div class="step-icon">1</div>
+            <div class="step-content">
+              <h3>Open your phone's camera app</h3>
+              <p>Or use any QR code scanner app</p>
+            </div>
+          </li>
+          <li class="step">
+            <div class="step-icon">2</div>
+            <div class="step-content">
+              <h3>Point it at the QR code</h3>
+              <p>Make sure it's clearly visible in the frame</p>
+            </div>
+          </li>
+          <li class="step">
+            <div class="step-icon">3</div>
+            <div class="step-content">
+              <h3>Tap the notification</h3>
+              <p>Open the link that appears on your screen</p>
+            </div>
+          </li>
+          <li class="step">
+            <div class="step-icon">4</div>
+            <div class="step-content">
+              <h3>Start taking photos</h3>
+              <p>Login and your photos will appear on the wall</p>
+            </div>
+          </li>
+        </ol>
+      </div>
+
+      <div class="action-buttons">
+        <a href="/camera" class="btn btn-primary">
+          <i class="fas fa-camera" aria-hidden="true"></i>
+          Open Camera Directly
+        </a>
+        <button class="btn btn-secondary" id="downloadQrBtn">
+          <i class="fas fa-download" aria-hidden="true"></i>
+          Download QR Code
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <div class="toast" id="toast">URL copied to clipboard!</div>
+
+  <script src="/qr.js" defer></script>
+</body>
+</html>
