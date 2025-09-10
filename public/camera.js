@@ -77,6 +77,17 @@ class CameraManager {
         option.addEventListener('click', handler);
         this.eventListeners.push({ element: option, event: 'click', handler });
       });
+      this.switchCameraBtn = document.querySelector('#switchCameraBtn');
+      this.isBackCamera = false;
+
+      if (this.switchCameraBtn) {
+        const handler = () => {
+          this.isBackCamera = !this.isBackCamera;
+          this.initializeCamera(this.isBackCamera);
+        };
+        this.switchCameraBtn.addEventListener('click', handler);
+        this.eventListeners.push({ element: this.switchCameraBtn, event: 'click', handler });
+      } 
     } catch (error) {
       console.error('Error binding events:', error);
       this.showStatus?.('Error setting up camera controls', 'error');
@@ -119,27 +130,34 @@ class CameraManager {
     }
   }
 
-  async initializeCamera() {
-    try {
-      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        this.stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            facingMode: 'user',
-            width: { ideal: 1280 },
-            height: { ideal: 720 }
-          }
-        });
-        this.video.srcObject = this.stream;
-        this.video.play();
-      } else {
-        throw new Error('Camera not supported');
+  async initializeCamera(useBackCamera = false) {
+  try {
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      // Stop previous stream if exists
+      if (this.stream) {
+        this.stream.getTracks().forEach(track => track.stop());
       }
-    } catch (error) {
-      console.error('Error initializing camera:', error);
-      this.showStatus?.('Failed to access camera', 'error');
-      this.snapBtn.disabled = true;
+
+      this.stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: useBackCamera ? { exact: "environment" } : "user",
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        }
+      });
+
+      this.video.srcObject = this.stream;
+      this.video.play();
+    } else {
+      throw new Error('Camera not supported');
     }
+  } catch (error) {
+    console.error('Error initializing camera:', error);
+    this.showStatus?.('Failed to access camera', 'error');
+    this.snapBtn.disabled = true;
   }
+  }
+
 
   async fetchUserInfo() {
     try {
