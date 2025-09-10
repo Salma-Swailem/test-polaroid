@@ -1,4 +1,5 @@
 class StageWall {
+  static zIndexCounter = 1000;
   constructor() {
     this.wall = document.getElementById('wall');
     this.loading = document.getElementById('loading');
@@ -71,31 +72,75 @@ class StageWall {
   }
 
   createPolaroid(data, position, isNew) {
-    const polaroid = document.createElement('div');
-    polaroid.className = 'polaroid';
-    if (isNew) polaroid.classList.add('new');
+  const polaroid = document.createElement('div');
+  polaroid.className = 'polaroid';
+  if (isNew) polaroid.classList.add('new');
 
-    const baseX = position.col * this.cellSize + (this.cellSize - 220) / 2;
-    const baseY = position.row * this.cellSize + (this.cellSize - 280) / 2;
-    const offsetX = (Math.random() - 0.5) * 40;
-    const offsetY = (Math.random() - 0.5) * 40;
-    polaroid.style.left = `${baseX + offsetX}px`;
-    polaroid.style.top = `${baseY + offsetY}px`;
+  const baseX = position.col * this.cellSize + (this.cellSize - 220) / 2;
+  const baseY = position.row * this.cellSize + (this.cellSize - 280) / 2;
+  const offsetX = (Math.random() - 0.5) * 40;
+  const offsetY = (Math.random() - 0.5) * 40;
+  polaroid.style.left = `${baseX + offsetX}px`;
+  polaroid.style.top = `${baseY + offsetY}px`;
 
-    const img = document.createElement('img');
-    img.src = data.img;
-    img.alt = 'Polaroid photo';
+  // 🔥 random rotation between -10° and +10°
+  const angle = (Math.random() * 20 - 10).toFixed(2);
+  polaroid.style.transform = `rotate(${angle}deg)`;
 
-    const caption = document.createElement('div');
-    caption.className = 'caption';
-    caption.textContent = data.caption || 'No caption';
+  const img = document.createElement('img');
+  img.src = data.img;
+  img.alt = 'Polaroid photo';
 
-    polaroid.appendChild(img);
-    polaroid.appendChild(caption);
+  const caption = document.createElement('div');
+  caption.className = 'caption';
+  caption.textContent = data.caption || 'No caption';
 
-    polaroid.addEventListener('click', () => this.showFullView(data));
-    return polaroid;
-  }
+  polaroid.appendChild(img);
+  polaroid.appendChild(caption);
+
+  // Click = full view
+  polaroid.addEventListener('click', (e) => {
+    // prevent click while dragging
+    if (polaroid.dragging) return;
+    this.showFullView(data);
+  });
+
+  // Make draggable
+  this.makeDraggable(polaroid);
+
+  return polaroid;
+}
+
+makeDraggable(el) {
+  let offsetX, offsetY;
+  let isDragging = false;
+
+  el.addEventListener('mousedown', (e) => {
+    isDragging = true;
+    el.dragging = true;
+    el.style.cursor = "grabbing";
+    el.style.zIndex = ++StageWall.zIndexCounter || 1000; // bring to front
+    offsetX = e.clientX - el.offsetLeft;
+    offsetY = e.clientY - el.offsetTop;
+    e.preventDefault();
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+    el.style.left = `${e.clientX - offsetX}px`;
+    el.style.top = `${e.clientY - offsetY}px`;
+  });
+
+  document.addEventListener('mouseup', () => {
+    if (isDragging) {
+      isDragging = false;
+      el.style.cursor = "grab";
+      setTimeout(() => el.dragging = false, 100); // allow click after drag
+    }
+  });
+}
+
+
 
   showFullView(data) {
     const modal = document.createElement('div');
