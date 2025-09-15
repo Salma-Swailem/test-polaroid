@@ -89,6 +89,10 @@
   </div>
 
   <script src="/socket.io/socket.io.js"></script>
+  <script>
+    // Verify Socket.IO is loaded
+    console.log('Socket.IO version:', io ? io.version : 'Not loaded!');
+  </script>
   <script src="/index.js" defer></script>
 
 </html>

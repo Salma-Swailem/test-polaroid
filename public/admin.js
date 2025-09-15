@@ -38,19 +38,38 @@ class AdminWall {
   }
 
   initializeSocket() {
+    console.log('Initializing socket connection...');
+    
     this.socket.on('connect', () => {
-      console.log('Admin connected to live wall');
+      console.log('Admin connected to live wall with socket ID:', this.socket.id);
       this.updateStats();
     });
 
     this.socket.on('broadcast-photo', (data) => {
+      console.log('Received new photo:', data);
       this.addPhoto(data, true);
     });
 
-    this.socket.on('disconnect', () => {
-      console.log('Admin disconnected from wall');
+    this.socket.on('user-count-update', (data) => {
+      console.log('User count updated:', data.count);
+      document.getElementById('activeUsers').textContent = data.count;
+    });
+
+    this.socket.on('connect_error', (error) => {
+      console.error('Socket connection error:', error);
+    });
+
+    this.socket.on('disconnect', (reason) => {
+      console.log('Admin disconnected from wall. Reason:', reason);
       this.updateStats();
     });
+    
+    // Log all socket events for debugging
+    const originalEmit = this.socket.emit;
+    this.socket.emit = function() {
+      console.log('Emitting event:', arguments[0], arguments[1]);
+      return originalEmit.apply(this, arguments);
+    };
   }
 
   async loadExistingPhotos() {
@@ -252,14 +271,16 @@ class AdminWall {
 
   updateStats() {
     const totalPhotos = this.wall.children.length;
-    const activeUsers = this.socket.connected ? 1 : 0;
-
-    // Calculate today's photos (simplified - photos in current session)
-    const todayPhotos = totalPhotos;
+    // Don't update active users here - it will be updated via socket events
+    const todayPhotos = totalPhotos; // Simplified - photos in current session
 
     document.getElementById('totalPhotos').textContent = totalPhotos;
-    document.getElementById('activeUsers').textContent = activeUsers;
     document.getElementById('todayPhotos').textContent = todayPhotos;
+    
+    // Request current user count from server
+    if (this.socket.connected) {
+      this.socket.emit('request-user-count');
+    }
   }
 
   refreshWall() {

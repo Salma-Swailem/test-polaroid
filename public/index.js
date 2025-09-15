@@ -37,9 +37,34 @@ class SmartWall {
   }
 
   initializeSocket() {
-    this.socket.on('broadcast-photo', (data) => this.addPhoto(data));
-    this.socket.on('connect', () => this.updateUsers(1));
-    this.socket.on('disconnect', () => this.updateUsers(0));
+    console.log('Initializing socket connection in index...');
+    
+    this.socket.on('connect', () => {
+      console.log('Connected to wall with socket ID:', this.socket.id);
+      this.updateUsers(1);
+      // Request current user count
+      this.socket.emit('request-user-count');
+    });
+
+    this.socket.on('broadcast-photo', (data) => {
+      console.log('Received new photo in index:', data);
+      this.addPhoto(data);
+    });
+
+    // Listen for user count updates
+    this.socket.on('user-count-update', (data) => {
+      console.log('User count updated in index:', data.count);
+      this.updateUsers(data.count);
+    });
+
+    this.socket.on('connect_error', (error) => {
+      console.error('Socket connection error in index:', error);
+    });
+
+    this.socket.on('disconnect', (reason) => {
+      console.log('Disconnected from wall. Reason:', reason);
+      this.updateUsers(0);
+    });
   }
 
   async loadExistingPhotos() {

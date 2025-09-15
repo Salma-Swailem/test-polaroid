@@ -97,6 +97,16 @@ app.get("/api/photos", async (req, res) => {
 // Proxy Telegram photo
 app.get("/api/photos/proxy/:id", proxyTelegramPhoto);
 
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    socketConnected: io.engine.clientsCount > 0,
+    connectedClients: io.engine.clientsCount,
+    uptime: process.uptime()
+  });
+});
+
 // 404 handler
 app.all("/*splat", (req, res) => ApiError(res, "Route not found", 404));
 
@@ -104,16 +114,63 @@ app.all("/*splat", (req, res) => ApiError(res, "Route not found", 404));
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });
 
+// Track connected users with a Set to avoid counting duplicates
+const connectedSockets = new Set();
+let connectedUsers = 0;
+
 // Socket.IO connections
 io.on("connection", async (socket) => {
-  logger.info("A user connected via Socket.IO");
+  // Add socket to connected set if not already present
+  if (!connectedSockets.has(socket.id)) {
+    connectedSockets.add(socket.id);
+    connectedUsers = connectedSockets.size;
+    logger.info(`User connected. Socket ID: ${socket.id}, Total users: ${connectedUsers}`);
+    
+    // Send updated user count to all connected clients
+    logger.info(`Sending user count update to all: ${connectedUsers}`);
+    io.emit('user-count-update', { count: connectedUsers });
+  }
 
-  // Removed initial broadcast of existing photos to prevent duplicates on clients
+  // Log all events for this socket
+  const originalEmit = socket.emit;
+  socket.emit = function() {
+    logger.info(`Emitting event '${arguments[0]}' to socket ${socket.id}`, arguments[1] || '');
+    return originalEmit.apply(this, arguments);
+  };
 
   // Listen for new photo broadcasts from clients
-  socket.on("new-photo", (data) => io.emit("broadcast-photo", data));
+  socket.on("new-photo", (data) => {
+    logger.info(`Received new-photo from ${socket.id}`);
+    io.emit("broadcast-photo", data);
+  });
+  
+  // Handle request for current user count
+  socket.on("request-user-count", () => {
+    logger.info(`Sending user count (${connectedUsers}) to socket ${socket.id}`);
+    socket.emit('user-count-update', { count: connectedUsers });
+  });
 
-  socket.on("disconnect", () => logger.info("A user disconnected"));
+  socket.on("disconnect", (reason) => {
+    // Remove socket from connected set
+    if (connectedSockets.delete(socket.id)) {
+      connectedUsers = connectedSockets.size;
+      logger.info(`User disconnected. Socket ID: ${socket.id}, Reason: ${reason}, Total users: ${connectedUsers}`);
+      
+      // Send updated user count to all connected clients
+      io.emit('user-count-update', { count: connectedUsers });
+    }
+    // Send updated user count to all connected admins
+    io.emit('user-count-update', { count: connectedUsers });
+  });
+
+  // Log all events received on this socket
+  const originalOn = socket.on;
+  socket.on = function(event, callback) {
+    return originalOn.call(this, event, function() {
+      logger.info(`Event '${event}' received from socket ${socket.id}`, arguments);
+      return callback.apply(this, arguments);
+    });
+  };
 });
 
 // Start server
