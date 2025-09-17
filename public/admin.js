@@ -33,13 +33,14 @@ class AdminWall {
     });
 
     document.getElementById('stageBtn').addEventListener('click', () => {
-      window.open('/', '_blank');
+      window.location.href = '/';
     });
+
   }
 
   initializeSocket() {
     console.log('Initializing socket connection...');
-    
+
     this.socket.on('connect', () => {
       console.log('Admin connected to live wall with socket ID:', this.socket.id);
       this.updateStats();
@@ -63,10 +64,10 @@ class AdminWall {
       console.log('Admin disconnected from wall. Reason:', reason);
       this.updateStats();
     });
-    
+
     // Log all socket events for debugging
     const originalEmit = this.socket.emit;
-    this.socket.emit = function() {
+    this.socket.emit = function () {
       console.log('Emitting event:', arguments[0], arguments[1]);
       return originalEmit.apply(this, arguments);
     };
@@ -276,7 +277,7 @@ class AdminWall {
 
     document.getElementById('totalPhotos').textContent = totalPhotos;
     document.getElementById('todayPhotos').textContent = todayPhotos;
-    
+
     // Request current user count from server
     if (this.socket.connected) {
       this.socket.emit('request-user-count');

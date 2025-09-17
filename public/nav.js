@@ -9,7 +9,6 @@ class NavigationManager {
 
   getCurrentPage() {
     const path = window.location.pathname;
-    if (path.includes('admin')) return 'admin';
     if (path.includes('camera')) return 'camera';
     if (path.includes('login')) return 'login';
     if (path.includes('qr')) return 'qr';
@@ -30,13 +29,7 @@ class NavigationManager {
 
     // Add global navigation bar
     this.addGlobalNav();
-    if (this.currentPage === 'admin') {
-      this.addAdminNavigation();
-    } else if (this.currentPage === 'qr') {
-      this.addQRNavigation();
-    } else if (this.currentPage === 'stage') {
-      this.addStageNavigation();
-    }
+
   }
 
   addGlobalNav() {
@@ -62,7 +55,7 @@ class NavigationManager {
       { name: 'camera', icon: '📷', url: '/camera.html', active: this.currentPage === 'camera' },
       { name: 'qr', icon: '🔳', url: '/qr.html', active: this.currentPage === 'qr' },
       { name: 'stage', icon: '🎤', url: '/stage.html', active: this.currentPage === 'stage' },
-      { name: 'admin', icon: '🛠️', url: '/admin.html', active: this.currentPage === 'admin' },
+
       { name: 'login', icon: '🔐', url: '/login.html', active: this.currentPage === 'login' }
     ];
 
@@ -139,9 +132,7 @@ class NavigationManager {
     document.head.appendChild(style);
   }
 
-  addAdminNavigation() {
-    // Optionally add admin-specific nav or actions
-  }
+
 
   addQRNavigation() {
     // Optionally add QR-specific nav or actions
