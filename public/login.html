@@ -5,52 +5,73 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Polaroid Wall - Login</title>
-  <script src="nav.js" defer></script>
   <link rel="stylesheet" href="/login.css" />
+  <script src="/nav.js" defer></script>
+  <script src="/login.js" defer></script>
 </head>
 
 <body>
-  <div class="login-container fade-in">
-    <div class="logo">📸</div>
+  <main class="login-container fade-in">
+    <div class="logo" aria-hidden="true">📸</div>
     <h1 class="subtitle">Polaroid Wall</h1>
-    <p style="color: #666; margin-bottom: 30px;">Capture and share your moments</p>
-    <button class="btn btn-secondary" id="logoutBtn" style="margin-bottom: 20px; display: none;">Logout</button>
+    <p class="tagline">Capture and share your moments</p>
 
-    <div class="input-group">
-      <input type="email" id="email" class="input-field" placeholder="Enter your email" required />
-    </div>
+    <!-- Logout button -->
+    <button type="button" id="logoutBtn" class="btn btn-secondary hidden">Logout</button>
 
-    <button id="sendOtpBtn" class="btn btn-primary">
-      <span id="sendOtpText">Send OTP</span>
-      <span id="sendOtpLoading" class="loading" style="display: none;"></span>
-    </button>
-
-    <div id="otpSection" class="otp-section">
-      <p style="color: #666; margin-bottom: 20px;">Enter the 6-digit code sent to your email</p>
-
-      <div class="otp-input">
-        <input type="text" maxlength="1" class="otp-digit" data-index="0" />
-        <input type="text" maxlength="1" class="otp-digit" data-index="1" />
-        <input type="text" maxlength="1" class="otp-digit" data-index="2" />
-        <input type="text" maxlength="1" class="otp-digit" data-index="3" />
-        <input type="text" maxlength="1" class="otp-digit" data-index="4" />
-        <input type="text" maxlength="1" class="otp-digit" data-index="5" />
+    <!-- Email input -->
+    <form id="loginForm" novalidate>
+      <div class="input-group">
+        <label for="email" class="visually-hidden">Email Address</label>
+        <input type="email" id="email" class="input-field" placeholder="Enter your email" required
+          autocomplete="email" />
       </div>
 
-      <button id="verifyOtpBtn" class="btn btn-primary">
-        <span id="verifyOtpText">Verify OTP</span>
-        <span id="verifyOtpLoading" class="loading" style="display: none;"></span>
+      <!-- Send OTP button -->
+      <button type="button" id="sendOtpBtn" class="btn btn-primary">
+        <span id="sendOtpText">Send OTP</span>
+        <span id="sendOtpLoading" class="loading" aria-hidden="true"></span>
       </button>
 
-      <button id="resendOtpBtn" class="btn btn-secondary" style="display: none;">
-        Resend OTP
-      </button>
-    </div>
+      <!-- OTP Section -->
+      <section id="otpSection" class="otp-section" aria-live="polite">
+        <p class="instruction">Enter the 6-digit code sent to your email</p>
 
-    <div id="status" class="status"></div>
-  </div>
+        <div class="otp-input" role="group" aria-label="One-time password">
+          <label for="otp0" class="visually-hidden">Digit 1</label>
+          <input type="text" id="otp0" maxlength="1" class="otp-digit" data-index="0" inputmode="numeric"
+            autocomplete="one-time-code" />
 
-  <script src="/nav.js"></script>
-  <script src="/login.js" defer></script>
+          <label for="otp1" class="visually-hidden">Digit 2</label>
+          <input type="text" id="otp1" maxlength="1" class="otp-digit" data-index="1" inputmode="numeric" />
+
+          <label for="otp2" class="visually-hidden">Digit 3</label>
+          <input type="text" id="otp2" maxlength="1" class="otp-digit" data-index="2" inputmode="numeric" />
+
+          <label for="otp3" class="visually-hidden">Digit 4</label>
+          <input type="text" id="otp3" maxlength="1" class="otp-digit" data-index="3" inputmode="numeric" />
+
+          <label for="otp4" class="visually-hidden">Digit 5</label>
+          <input type="text" id="otp4" maxlength="1" class="otp-digit" data-index="4" inputmode="numeric" />
+
+          <label for="otp5" class="visually-hidden">Digit 6</label>
+          <input type="text" id="otp5" maxlength="1" class="otp-digit" data-index="5" inputmode="numeric" />
+        </div>
+
+        <button type="button" id="verifyOtpBtn" class="btn btn-primary">
+          <span id="verifyOtpText">Verify OTP</span>
+          <span id="verifyOtpLoading" class="loading" aria-hidden="true"></span>
+        </button>
+
+        <button type="button" id="resendOtpBtn" class="btn btn-secondary hidden">
+          Resend OTP
+        </button>
+      </section>
+    </form>
+
+    <!-- Status message -->
+    <div id="status" class="status" role="alert" aria-live="assertive"></div>
+  </main>
+</body>
 
 </html>

@@ -1,10 +1,12 @@
-// Shared Navigation Component for Polaroid Wall
 class NavigationManager {
   constructor() {
     this.currentPage = this.getCurrentPage();
     this.token = localStorage.getItem('jwtToken');
+    console.log('Current Page:', this.currentPage, 'Token present:', !!this.token);
+    this.isExpanded = false;
+    this.userRole = null;
+    this.navContainer = null;
     this.initializeNavigation();
-    this.setupAccessibility();
   }
 
   getCurrentPage() {
@@ -13,51 +15,113 @@ class NavigationManager {
     if (path.includes('login')) return 'login';
     if (path.includes('qr')) return 'qr';
     if (path.includes('stage')) return 'stage';
+    if (path.includes('admin')) return 'admin';
     if (path.includes('index') || path === '/' || path.includes('gallery')) return 'wall';
     return 'wall';
   }
 
-  initializeNavigation() {
-    // Add navigation to pages that don't have it
-    if (this.currentPage === 'wall') {
-      this.addWallNavigation();
-    } else if (this.currentPage === 'camera') {
-      this.addCameraNavigation();
-    } else if (this.currentPage === 'login') {
-      this.addLoginNavigation();
+  async initializeNavigation() {
+    if (this.token) {
+      await this.fetchUserRole();
     }
-
-    // Add global navigation bar
     this.addGlobalNav();
+    this.setupAccessibility();
+  }
 
+  // Helper method to decode JWT token
+  decodeJWT(token) {
+    try {
+      const base64Url = token.split('.')[1]; // Get payload part
+      if (!base64Url) {
+        throw new Error('Invalid JWT token: missing payload');
+      }
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+      return JSON.parse(jsonPayload);
+    } catch (error) {
+      console.error('Error decoding JWT token:', error);
+      return null;
+    }
+  }
+
+  async fetchUserRole() {
+    if (!this.token) {
+      this.userRole = 'user';
+      return;
+    }
+    const payload = this.decodeJWT(this.token);
+    if (payload && payload.role) {
+      this.userRole = payload.role;
+    } else {
+      this.userRole = 'user';
+      console.error('Failed to extract role from JWT token');
+    }
   }
 
   addGlobalNav() {
-    const nav = document.createElement('nav');
-    nav.className = 'global-nav';
-    nav.style.cssText = `
+    this.navContainer = document.createElement('nav');
+    this.navContainer.className = 'global-nav';
+    this.navContainer.style.cssText = `
       position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(255, 255, 255, 0.95);
+      top: 20px;
+      right: 20px;
+      width: 60px;
+      height: 60px;
+      background: linear-gradient(135deg, #0ff0fc, #00ff7f, #8a2be2, #00ff00);
+      background-size: 400% 400%;
+      animation: aurora 15s ease infinite;
       backdrop-filter: blur(10px);
-      border-radius: 25px;
-      padding: 10px;
+      border-radius: 50%;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
       z-index: 1000;
       display: flex;
-      gap: 5px;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
     `;
 
-    const pages = [
-      { name: 'wall', icon: '🏠', url: '/index.html', active: this.currentPage === 'wall' },
-      { name: 'camera', icon: '📷', url: '/camera.html', active: this.currentPage === 'camera' },
-      { name: 'qr', icon: '🔳', url: '/qr.html', active: this.currentPage === 'qr' },
-      { name: 'stage', icon: '🎤', url: '/stage.html', active: this.currentPage === 'stage' },
+    const toggleButton = document.createElement('button');
+    toggleButton.className = 'nav-toggle';
+    toggleButton.innerHTML = '☰';
+    toggleButton.setAttribute('aria-label', 'Toggle navigation menu');
+    toggleButton.style.cssText = `
+      background: none;
+      border: none;
+      font-size: 1.8rem;
+      color: white;
+      cursor: pointer;
+      width: 60px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+    `;
 
-      { name: 'login', icon: '🔐', url: '/login.html', active: this.currentPage === 'login' }
-    ];
+    const navItems = document.createElement('div');
+    navItems.className = 'nav-items';
+    navItems.style.cssText = `
+      position: absolute;
+      top: 70px;
+      right: 0;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(5px);
+      border-radius: 10px;
+      padding: 10px;
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+      transform: scale(0);
+      transform-origin: top right;
+      transition: transform 0.3s ease, opacity 0.3s ease;
+      opacity: 0;
+    `;
+
+    const pages = this.getNavPages();
 
     pages.forEach(page => {
       const link = document.createElement('a');
@@ -65,24 +129,28 @@ class NavigationManager {
       link.className = `nav-link ${page.active ? 'active' : ''}`;
       link.innerHTML = page.icon;
       link.title = page.name.charAt(0).toUpperCase() + page.name.slice(1);
+      link.setAttribute('aria-label', `Navigate to ${page.name}`);
       link.style.cssText = `
         display: flex;
         align-items: center;
         justify-content: center;
         width: 40px;
         height: 40px;
-        border-radius: 50%;
+        border-radius: 8px;
         text-decoration: none;
         font-size: 1.2rem;
         transition: all 0.3s ease;
-        background: ${page.active ? '#667eea' : 'transparent'};
-        color: ${page.active ? 'white' : '#666'};
+        background: transparent;
+        color: white;
+        backdrop-filter: none;
       `;
 
       link.addEventListener('mouseenter', () => {
         if (!page.active) {
-          link.style.background = '#f0f0f0';
-          link.style.transform = 'scale(1.1)';
+          link.style.background = 'rgba(255, 255, 255, 0.2)';
+          link.style.transform = 'scale(1.2)';
+          link.style.color = '#ffffff';
+          link.style.textShadow = '0 0 10px rgba(255, 255, 255, 0.5)';
         }
       });
 
@@ -90,71 +158,112 @@ class NavigationManager {
         if (!page.active) {
           link.style.background = 'transparent';
           link.style.transform = 'scale(1)';
+          link.style.color = 'white';
+          link.style.textShadow = 'none';
         }
       });
 
-      nav.appendChild(link);
+      navItems.appendChild(link);
     });
 
-    document.body.appendChild(nav);
+    toggleButton.addEventListener('click', () => {
+      console.log('Toggle clicked, current isExpanded:', this.isExpanded);
+      this.toggleNav();
+    });
+
+    this.navContainer.appendChild(toggleButton);
+    this.navContainer.appendChild(navItems);
+    document.body.appendChild(this.navContainer);
+  }
+
+  getNavPages() {
+    const basePages = [
+      { name: 'wall', icon: '🏠', url: '/index.html', active: this.currentPage === 'wall' },
+      { name: 'camera', icon: '📷', url: '/camera.html', active: this.currentPage === 'camera' },
+      { name: 'qr', icon: '🔳', url: '/qr.html', active: this.currentPage === 'qr' },
+      { name: 'login', icon: '🔐', url: '/login.html', active: this.currentPage === 'login' }
+    ];
+
+    if (!this.token) {
+      return [{ name: 'login', icon: '🔐', url: '/login.html', active: this.currentPage === 'login' }];
+    }
+
+    if (this.userRole === 'admin') {
+      basePages.push(
+        { name: 'stage', icon: '🎤', url: '/stage.html', active: this.currentPage === 'stage' },
+        { name: 'admin', icon: '🛠️', url: '/admin.html', active: this.currentPage === 'admin' }
+      );
+    }
+
+    return basePages;
+  }
+
+  toggleNav() {
+    this.isExpanded = !this.isExpanded;
+    const navItems = this.navContainer.querySelector('.nav-items');
+    const toggleButton = this.navContainer.querySelector('.nav-toggle');
+
+    console.log('Toggling nav, isExpanded:', this.isExpanded);
+
+    if (this.isExpanded) {
+      navItems.style.display = 'flex';
+      setTimeout(() => {
+        navItems.style.opacity = '1';
+        navItems.style.transform = 'scale(1)';
+      }, 10);
+      toggleButton.innerHTML = '✕';
+      toggleButton.setAttribute('aria-label', 'Close navigation menu');
+      this.navContainer.style.borderRadius = '15px 15px 50% 50%';
+      this.navContainer.style.width = 'auto';
+      this.navContainer.style.padding = '10px';
+    } else {
+      navItems.style.opacity = '0';
+      navItems.style.transform = 'scale(0)';
+      setTimeout(() => {
+        navItems.style.display = 'none';
+      }, 300);
+      toggleButton.innerHTML = '☰';
+      toggleButton.setAttribute('aria-label', 'Open navigation menu');
+      this.navContainer.style.borderRadius = '50%';
+      this.navContainer.style.width = '60px';
+      this.navContainer.style.padding = '0';
+    }
   }
 
   setupAccessibility() {
-    // Add focus style for nav links
     const style = document.createElement('style');
     style.innerHTML = `
+      @keyframes aurora {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+      }
       .nav-link:focus {
-        outline: 2px solid #764ba2;
+        outline: 2px solid #ffffff;
         outline-offset: 2px;
       }
-      .global-nav {
-        font-size: 1.5rem;
+      .nav-toggle:focus {
+        outline: 2px solid #ffffff;
+        outline-offset: 2px;
+      }
+      .global-nav.expanded {
+        width: auto;
+        padding: 10px;
       }
       .nav-link.active {
-        background: #764ba2;
-        color: #fff;
-        border-radius: 15px;
-        padding: 4px 12px;
-        box-shadow: 0 2px 8px rgba(118,75,162,0.15);
+        background: transparent;
+        color: white;
+        text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
       }
       .nav-link {
-        text-decoration: none;
-        color: #333;
-        padding: 4px 12px;
-        border-radius: 15px;
-        transition: background 0.2s, color 0.2s;
-      }
-      .nav-link:hover {
-        background: #e1e5e9;
-        color: #764ba2;
+        background: transparent;
+        color: white;
       }
     `;
     document.head.appendChild(style);
   }
 
-
-
-  addQRNavigation() {
-    // Optionally add QR-specific nav or actions
-  }
-
-  addStageNavigation() {
-    // Optionally add stage-specific nav or actions
-  }
-
-  addWallNavigation() {
-    // Wall page already has navigation
-  }
-
-  addCameraNavigation() {
-    // Camera page already has navigation
-  }
-
-  addLoginNavigation() {
-    // Login page already has navigation
-  }
-
-  // Utility methods
   static checkAuth() {
     const token = localStorage.getItem('jwtToken');
     if (!token) {
@@ -200,10 +309,7 @@ class NavigationManager {
     notification.appendChild(msg);
     document.body.appendChild(notification);
 
-    // Show notification
     setTimeout(() => notification.style.transform = 'translateX(0)', 100);
-
-    // Hide and remove
     setTimeout(() => {
       notification.style.transform = 'translateX(400px)';
       setTimeout(() => notification.remove(), 300);
@@ -248,7 +354,6 @@ class NavigationManager {
     loading.appendChild(container);
     document.body.appendChild(loading);
 
-    // Add spin animation if not exists
     if (!document.querySelector('#globalSpinStyle')) {
       const style = document.createElement('style');
       style.id = 'globalSpinStyle';
@@ -270,12 +375,10 @@ class NavigationManager {
   }
 }
 
-// Auto-initialize navigation on all pages
 document.addEventListener('DOMContentLoaded', () => {
   new NavigationManager();
 });
 
-// Export for use in other scripts
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = NavigationManager;
 }

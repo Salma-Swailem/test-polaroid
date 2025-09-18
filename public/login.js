@@ -3,6 +3,7 @@ class LoginManager {
     this.userEmail = "";
     this.otpAttempts = 0;
     this.maxOtpAttempts = 3;
+    this.isLoggedIn = false;
     this.initializeElements();
     this.bindEvents();
   }
@@ -12,6 +13,7 @@ class LoginManager {
     this.sendOtpBtn = document.getElementById('sendOtpBtn');
     this.verifyOtpBtn = document.getElementById('verifyOtpBtn');
     this.resendOtpBtn = document.getElementById('resendOtpBtn');
+    this.logoutBtn = document.getElementById('logoutBtn');
     this.otpSection = document.getElementById('otpSection');
     this.status = document.getElementById('status');
     this.otpInputs = document.querySelectorAll('.otp-digit');
@@ -27,6 +29,7 @@ class LoginManager {
     this.sendOtpBtn.addEventListener('click', () => this.sendOtp());
     this.verifyOtpBtn.addEventListener('click', () => this.verifyOtp());
     this.resendOtpBtn.addEventListener('click', () => this.sendOtp());
+    this.logoutBtn.addEventListener('click', () => this.logout());
 
     // OTP input handling
     this.otpInputs.forEach((input, index) => {
@@ -55,8 +58,8 @@ class LoginManager {
       return;
     }
 
+    // Set loading state
     this.setLoading(this.sendOtpBtn, this.sendOtpText, this.sendOtpLoading, true);
-    this.sendOtpBtn.disabled = true;
 
     try {
       const response = await fetch('/api/auth/register-or-login', {
@@ -66,11 +69,20 @@ class LoginManager {
       });
 
       const data = await response.json();
+      console.log('API Response:', data); // Debug log to inspect response
 
       if (response.ok && data.status === 'OK') {
+        // Reset OTP attempts and clear inputs
+        this.otpAttempts = 0;
+        this.otpInputs.forEach(input => input.value = '');
         this.showStatus('OTP sent! Check your email.', 'success');
+
+        // Hide email section and show OTP section
+        this.emailInput.parentElement.classList.add('hidden');
+        this.sendOtpBtn.classList.add('hidden');
+        this.otpSection.classList.remove('hidden');
         this.otpSection.style.display = 'block';
-        this.emailInput.disabled = true;
+        this.resendOtpBtn.classList.remove('hidden');
         this.resendOtpBtn.style.display = 'block';
         this.otpInputs[0].focus();
 
@@ -83,8 +95,8 @@ class LoginManager {
       console.error('Error sending OTP:', error);
       this.showStatus('Network error. Please try again.', 'error');
     } finally {
+      // Always reset loading state
       this.setLoading(this.sendOtpBtn, this.sendOtpText, this.sendOtpLoading, false);
-      this.sendOtpBtn.disabled = false;
     }
   }
 
@@ -98,7 +110,6 @@ class LoginManager {
 
     this.otpAttempts++;
     this.setLoading(this.verifyOtpBtn, this.verifyOtpText, this.verifyOtpLoading, true);
-    this.verifyOtpBtn.disabled = true;
 
     try {
       const response = await fetch('/api/verify/verify-otp', {
@@ -112,7 +123,12 @@ class LoginManager {
       if (response.ok && data.status === 'OK' && data.data.token) {
         const token = data.data.token;
         localStorage.setItem('jwtToken', token);
+        this.isLoggedIn = true;
         this.showStatus('Login successful! Redirecting...', 'success');
+
+        // Show logout button after successful login
+        this.logoutBtn.classList.remove('hidden');
+        this.logoutBtn.style.display = 'block';
 
         // Clear OTP inputs
         this.otpInputs.forEach(input => input.value = '');
@@ -125,10 +141,7 @@ class LoginManager {
 
         if (this.otpAttempts >= this.maxOtpAttempts) {
           this.showStatus('Too many failed attempts. Please request a new OTP.', 'error');
-          this.otpSection.style.display = 'none';
-          this.emailInput.disabled = false;
-          this.resendOtpBtn.style.display = 'none';
-          this.otpAttempts = 0;
+          this.resetToEmail();
         }
       }
     } catch (error) {
@@ -136,8 +149,31 @@ class LoginManager {
       this.showStatus('Network error. Please try again.', 'error');
     } finally {
       this.setLoading(this.verifyOtpBtn, this.verifyOtpText, this.verifyOtpLoading, false);
-      this.verifyOtpBtn.disabled = false;
     }
+  }
+
+  logout() {
+    localStorage.removeItem('jwtToken');
+    this.isLoggedIn = false;
+    this.showStatus('Logged out successfully', 'success');
+    this.resetToEmail();
+  }
+
+  resetToEmail() {
+    // Reset UI to show email section
+    this.emailInput.parentElement.classList.remove('hidden');
+    this.sendOtpBtn.classList.remove('hidden');
+    this.otpSection.classList.add('hidden');
+    this.otpSection.style.display = 'none';
+    this.emailInput.disabled = false;
+    this.emailInput.value = '';
+    this.otpInputs.forEach(input => input.value = '');
+    this.resendOtpBtn.classList.add('hidden');
+    this.resendOtpBtn.style.display = 'none';
+    this.logoutBtn.classList.add('hidden');
+    this.logoutBtn.style.display = 'none';
+    this.otpAttempts = 0;
+    this.emailInput.focus();
   }
 
   handleOtpInput(e, index) {
@@ -197,11 +233,11 @@ class LoginManager {
   setLoading(button, textElement, loadingElement, isLoading) {
     if (isLoading) {
       textElement.style.display = 'none';
-      loadingElement.style.display = 'inline-block';
+      loadingElement.classList.add('active');
       button.disabled = true;
     } else {
       textElement.style.display = 'inline';
-      loadingElement.style.display = 'none';
+      loadingElement.classList.remove('active');
       button.disabled = false;
     }
   }
@@ -226,18 +262,18 @@ class LoginManager {
 
 // Initialize the login manager when the page loads
 document.addEventListener('DOMContentLoaded', () => {
-  new LoginManager();
-  // Show logout button if logged in
-  const logoutBtn = document.getElementById('logoutBtn');
-  if (logoutBtn) {
-    if (localStorage.getItem('jwtToken')) {
-      logoutBtn.style.display = 'block';
-      logoutBtn.addEventListener('click', () => {
-        localStorage.removeItem('jwtToken');
-        window.location.href = '/login.html';
-      });
-    } else {
-      logoutBtn.style.display = 'none';
-    }
+  // Auto-redirect if already logged in
+  if (localStorage.getItem('jwtToken')) {
+    const loginManager = new LoginManager();
+    loginManager.isLoggedIn = true;
+    loginManager.logoutBtn.classList.remove('hidden');
+    loginManager.logoutBtn.style.display = 'block';
+    // Optionally hide login form if already logged in
+    loginManager.emailInput.parentElement.classList.add('hidden');
+    loginManager.sendOtpBtn.classList.add('hidden');
+    loginManager.otpSection.classList.add('hidden');
+    return;
   }
+
+  new LoginManager();
 });

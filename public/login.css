@@ -35,8 +35,14 @@ body {
 
 .subtitle {
   color: #666;
-  margin-bottom: 30px;
+  margin-bottom: 10px;
   font-size: 1.1rem;
+}
+
+.tagline {
+  color: #666;
+  margin-bottom: 30px;
+  font-size: 0.9rem;
 }
 
 .input-group {
@@ -104,6 +110,12 @@ body {
   animation: slideDown 0.3s ease;
 }
 
+.instruction {
+  margin-bottom: 20px;
+  color: #666;
+  font-size: 1rem;
+}
+
 .otp-input {
   display: flex;
   gap: 10px;
@@ -154,7 +166,7 @@ body {
 }
 
 .loading {
-  display: inline-block;
+  display: none;
   width: 20px;
   height: 20px;
   border: 3px solid #f3f3f3;
@@ -162,6 +174,10 @@ body {
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-right: 10px;
+}
+
+.loading.active {
+  display: inline-block;
 }
 
 @keyframes spin {
@@ -198,6 +214,22 @@ body {
   to {
     opacity: 1;
   }
+}
+
+.hidden {
+  display: none !important;
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  margin: -1px !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
 }
 
 @media (max-width: 480px) {

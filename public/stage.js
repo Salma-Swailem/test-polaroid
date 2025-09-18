@@ -4,7 +4,11 @@ class StageWall {
     this.wall = document.getElementById('wall');
     this.loading = document.getElementById('loading');
     this.photos = new Map(); // unique key -> element
-    this.cellSize = 250;
+    this.photoDatas = new Map(); // unique key -> data
+    this.photoKeys = []; // array of keys in order
+    this.baseCellSize = 250;
+    this.scale = 1;
+    this.cellSize = this.baseCellSize * this.scale;
     this.occupiedSlots = new Set();
     this.initializeGrid();
     this.bindEvents();
@@ -24,6 +28,7 @@ class StageWall {
     document.getElementById('cameraBtn').addEventListener('click', () => {
       window.location.href = '/camera.html';
     });
+    document.getElementById('exportBtn').addEventListener('click', () => this.exportWall());
   }
 
   async loadExistingPhotos() {
@@ -49,12 +54,18 @@ class StageWall {
   addPhoto(data, isNew = false) {
     if (this.photos.has(data.key)) return;
 
-    const position = this.findRandomPosition();
-    if (!position) return;
+    let position = this.findRandomPosition();
+    if (!position) {
+      this.zoomOut();
+      position = this.findRandomPosition();
+      if (!position) return;
+    }
 
+    this.photoDatas.set(data.key, data);
     const polaroid = this.createPolaroid(data, position, isNew);
     this.wall.appendChild(polaroid);
     this.photos.set(data.key, polaroid);
+    this.photoKeys.push(data.key);
     this.occupiedSlots.add(`${position.row}:${position.col}`);
     this.limitPhotos();
   }
@@ -72,75 +83,112 @@ class StageWall {
   }
 
   createPolaroid(data, position, isNew) {
-  const polaroid = document.createElement('div');
-  polaroid.className = 'polaroid';
-  if (isNew) polaroid.classList.add('new');
+    const polaroid = document.createElement('div');
+    polaroid.className = 'polaroid';
+    if (isNew) polaroid.classList.add('new');
 
-  const baseX = position.col * this.cellSize + (this.cellSize - 220) / 2;
-  const baseY = position.row * this.cellSize + (this.cellSize - 280) / 2;
-  const offsetX = (Math.random() - 0.5) * 40;
-  const offsetY = (Math.random() - 0.5) * 40;
-  polaroid.style.left = `${baseX + offsetX}px`;
-  polaroid.style.top = `${baseY + offsetY}px`;
+    const photoWidth = 220 * this.scale;
+    const photoHeight = 280 * this.scale;
+    const padding = 15 * this.scale;
+    const imgHeight = 200 * this.scale;
+    const captionMargin = 12 * this.scale;
+    const minCaptionHeight = 40 * this.scale;
+    const offsetRange = 40 * this.scale;
 
-  // 🔥 random rotation between -10° and +10°
-  const angle = (Math.random() * 20 - 10).toFixed(2);
-  polaroid.style.transform = `rotate(${angle}deg)`;
+    polaroid.style.width = `${photoWidth}px`;
+    polaroid.style.height = `${photoHeight}px`;
+    polaroid.style.padding = `${padding}px`;
+    polaroid.style.borderRadius = `${12 * this.scale}px`;
+    polaroid.style.boxShadow = `0 ${20 * this.scale}px ${40 * this.scale}px rgba(0, 0, 0, 0.3)`;
 
-  const img = document.createElement('img');
-  img.src = data.img;
-  img.alt = 'Polaroid photo';
+    const baseX = position.col * this.cellSize + (this.cellSize - photoWidth) / 2;
+    const baseY = position.row * this.cellSize + (this.cellSize - photoHeight) / 2;
+    const offsetX = (Math.random() - 0.5) * offsetRange;
+    const offsetY = (Math.random() - 0.5) * offsetRange;
+    polaroid.style.left = `${baseX + offsetX}px`;
+    polaroid.style.top = `${baseY + offsetY}px`;
 
-  const caption = document.createElement('div');
-  caption.className = 'caption';
-  caption.textContent = data.caption || 'No caption';
+    // random rotation between -10° and +10°
+    const angle = (Math.random() * 20 - 10).toFixed(2);
+    polaroid.style.transform = `rotate(${angle}deg)`;
 
-  polaroid.appendChild(img);
-  polaroid.appendChild(caption);
+    const img = document.createElement('img');
+    img.src = data.img;
+    img.alt = 'Polaroid photo';
+    img.style.height = `${imgHeight}px`;
+    img.style.borderRadius = `${8 * this.scale}px`;
 
-  // Click = full view
-  polaroid.addEventListener('click', (e) => {
-    // prevent click while dragging
-    if (polaroid.dragging) return;
-    this.showFullView(data);
-  });
+    const caption = document.createElement('div');
+    caption.className = 'caption';
+    caption.textContent = data.caption || 'No caption';
+    caption.style.marginTop = `${captionMargin}px`;
+    caption.style.fontSize = `${this.scale}rem`;
+    caption.style.minHeight = `${minCaptionHeight}px`;
 
-  // Make draggable
-  this.makeDraggable(polaroid);
+    polaroid.appendChild(img);
+    polaroid.appendChild(caption);
 
-  return polaroid;
-}
+    // Store grid position for later removal
+    polaroid.dataset.row = position.row;
+    polaroid.dataset.col = position.col;
 
-makeDraggable(el) {
-  let offsetX, offsetY;
-  let isDragging = false;
+    // Click = full view
+    polaroid.addEventListener('click', (e) => {
+      // prevent click while dragging
+      if (polaroid.dragging) return;
+      this.showFullView(data);
+    });
 
-  el.addEventListener('mousedown', (e) => {
-    isDragging = true;
-    el.dragging = true;
-    el.style.cursor = "grabbing";
-    el.style.zIndex = ++StageWall.zIndexCounter || 1000; // bring to front
-    offsetX = e.clientX - el.offsetLeft;
-    offsetY = e.clientY - el.offsetTop;
-    e.preventDefault();
-  });
+    // Make draggable
+    this.makeDraggable(polaroid);
 
-  document.addEventListener('mousemove', (e) => {
-    if (!isDragging) return;
-    el.style.left = `${e.clientX - offsetX}px`;
-    el.style.top = `${e.clientY - offsetY}px`;
-  });
+    return polaroid;
+  }
 
-  document.addEventListener('mouseup', () => {
-    if (isDragging) {
-      isDragging = false;
-      el.style.cursor = "grab";
-      setTimeout(() => el.dragging = false, 100); // allow click after drag
-    }
-  });
-}
+  zoomOut() {
+    this.scale *= 0.9;
+    if (this.scale < 0.4) this.scale = 0.4; // Prevent too small
+    this.cellSize = this.baseCellSize * this.scale;
+    this.initializeGrid();
 
+    // Reposition all photos
+    const oldDatas = Array.from(this.photoDatas.values());
+    this.wall.innerHTML = '';
+    this.occupiedSlots.clear();
+    this.photos.clear();
+    this.photoDatas.clear();
+    this.photoKeys = [];
+    oldDatas.forEach(data => this.addPhoto(data, false));
+  }
 
+  makeDraggable(el) {
+    let offsetX, offsetY;
+    let isDragging = false;
+
+    el.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      el.dragging = true;
+      el.style.cursor = "grabbing";
+      el.style.zIndex = ++StageWall.zIndexCounter || 1000; // bring to front
+      offsetX = e.clientX - el.offsetLeft;
+      offsetY = e.clientY - el.offsetTop;
+      e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      el.style.left = `${e.clientX - offsetX}px`;
+      el.style.top = `${e.clientY - offsetY}px`;
+    });
+
+    document.addEventListener('mouseup', () => {
+      if (isDragging) {
+        isDragging = false;
+        el.style.cursor = "grab";
+        setTimeout(() => el.dragging = false, 100); // allow click after drag
+      }
+    });
+  }
 
   showFullView(data) {
     const modal = document.createElement('div');
@@ -162,18 +210,160 @@ makeDraggable(el) {
 
   limitPhotos() {
     const maxPhotos = Math.floor(this.rows * this.cols * 0.8);
-    const photos = Array.from(this.wall.children);
-    while (photos.length > maxPhotos) {
-      const oldest = photos.shift();
-      if (oldest) {
-        const left = parseInt(oldest.style.left) || 0;
-        const top = parseInt(oldest.style.top) || 0;
-        const col = Math.floor(left / this.cellSize);
-        const row = Math.floor(top / this.cellSize);
+    while (this.photos.size > maxPhotos) {
+      const key = this.photoKeys.shift();
+      if (!key) break;
+      const el = this.photos.get(key);
+      if (el) {
+        const row = parseInt(el.dataset.row);
+        const col = parseInt(el.dataset.col);
         this.occupiedSlots.delete(`${row}:${col}`);
-        oldest.remove();
+        el.remove();
+        this.photos.delete(key);
+        this.photoDatas.delete(key);
       }
     }
+  }
+
+  async exportWall() {
+    const photosData = Array.from(this.photoDatas.values());
+    const numPhotos = photosData.length;
+    if (numPhotos === 0) return;
+
+    // Load all images
+    const loadedImages = await Promise.all(
+      photosData.map(
+        (data) =>
+          new Promise((resolve) => {
+            const i = new Image();
+            i.src = data.img;
+            i.onload = () => resolve(i);
+            i.onerror = () => resolve(null);
+          })
+      )
+    );
+
+    const exportScale = 2; // For high quality
+    const basePhotoWidth = 220 * exportScale;
+    const basePhotoHeight = 280 * exportScale;
+    const basePadding = 15 * exportScale;
+    const baseImgWidth = basePhotoWidth - 2 * basePadding;
+    const baseImgHeight = 200 * exportScale;
+    const baseCaptionMargin = 12 * exportScale;
+    const baseFontSize = 16 * exportScale; // Approx 1rem
+    const baseBorderRadius = 12 * exportScale;
+    const imgBorderRadius = 8 * exportScale;
+    const baseCaptionHeight = 40 * exportScale;
+
+    // Grid layout for clean export
+    const cols = Math.ceil(Math.sqrt(numPhotos));
+    const rows = Math.ceil(numPhotos / cols);
+    const cellSize = Math.max(basePhotoWidth, basePhotoHeight) + 50 * exportScale; // Margin
+
+    const canvas = document.createElement('canvas');
+    canvas.width = cols * cellSize;
+    canvas.height = rows * cellSize;
+    const ctx = canvas.getContext('2d');
+
+    // Background
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Draw each polaroid
+    photosData.forEach((data, index) => {
+      const col = index % cols;
+      const row = Math.floor(index / cols);
+      const baseX = col * cellSize + (cellSize - basePhotoWidth) / 2;
+      const baseY = row * cellSize + (cellSize - basePhotoHeight) / 2;
+
+      ctx.save();
+      ctx.translate(baseX, baseY);
+
+      // Shadow
+      ctx.shadowColor = 'rgba(0,0,0,0.3)';
+      ctx.shadowBlur = 20 * exportScale;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 20 * exportScale;
+
+      // Rounded rect for background
+      const roundedRect = (cx, cy, cw, ch, cr) => {
+        ctx.beginPath();
+        ctx.moveTo(cx + cr, cy);
+        ctx.lineTo(cx + cw - cr, cy);
+        ctx.quadraticCurveTo(cx + cw, cy, cx + cw, cy + cr);
+        ctx.lineTo(cx + cw, cy + ch - cr);
+        ctx.quadraticCurveTo(cx + cw, cy + ch, cx + cw - cr, cy + ch);
+        ctx.lineTo(cx + cr, cy + ch);
+        ctx.quadraticCurveTo(cx, cy + ch, cx, cy + ch - cr);
+        ctx.lineTo(cx, cy + cr);
+        ctx.quadraticCurveTo(cx, cy, cx + cr, cy);
+        ctx.closePath();
+        ctx.fill();
+      };
+
+      ctx.fillStyle = 'white';
+      roundedRect(0, 0, basePhotoWidth, basePhotoHeight, baseBorderRadius);
+
+      // Image with clip for rounded corners and object-fit: cover
+      const img = loadedImages[index];
+      if (img) {
+        const targetW = baseImgWidth;
+        const targetH = baseImgHeight;
+        let srcX = 0;
+        let srcY = 0;
+        let srcW = img.naturalWidth;
+        let srcH = img.naturalHeight;
+        const targetRatio = targetW / targetH;
+        const imgRatio = img.naturalWidth / img.naturalHeight;
+
+        if (targetRatio > imgRatio) {
+          // Crop height
+          srcH = img.naturalHeight * (imgRatio / targetRatio);
+          srcY = (img.naturalHeight - srcH) / 2;
+        } else {
+          // Crop width
+          srcW = img.naturalWidth * (targetRatio / imgRatio);
+          srcX = (img.naturalWidth - srcW) / 2;
+        }
+
+        // Clip path for rounded image
+        const roundedRectPath = (cx, cy, cw, ch, cr) => {
+          ctx.beginPath();
+          ctx.moveTo(cx + cr, cy);
+          ctx.lineTo(cx + cw - cr, cy);
+          ctx.quadraticCurveTo(cx + cw, cy, cx + cw, cy + cr);
+          ctx.lineTo(cx + cw, cy + ch - cr);
+          ctx.quadraticCurveTo(cx + cw, cy + ch, cx + cw - cr, cy + ch);
+          ctx.lineTo(cx + cr, cy + ch);
+          ctx.quadraticCurveTo(cx, cy + ch, cx, cy + ch - cr);
+          ctx.lineTo(cx, cy + cr);
+          ctx.quadraticCurveTo(cx, cy, cx + cr, cy);
+          ctx.closePath();
+        };
+
+        ctx.save();
+        roundedRectPath(basePadding, basePadding, targetW, targetH, imgBorderRadius);
+        ctx.clip();
+        ctx.drawImage(img, srcX, srcY, srcW, srcH, basePadding, basePadding, targetW, targetH);
+        ctx.restore();
+      }
+
+      // Caption (no shadow for text)
+      ctx.shadowColor = 'transparent'; // Disable shadow for text
+      ctx.font = `600 ${baseFontSize}px sans-serif`;
+      ctx.fillStyle = 'black';
+      ctx.textAlign = 'center';
+      const captionY = basePadding + baseImgHeight + baseCaptionMargin + (baseCaptionHeight / 2);
+      ctx.fillText(data.caption || 'No caption', basePhotoWidth / 2, captionY);
+
+      ctx.restore();
+    });
+
+    // Download
+    const link = document.createElement('a');
+    link.download = 'polaroid_wall.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
   }
 }
 
