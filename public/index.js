@@ -4,8 +4,11 @@ class SmartWall {
     this.socket = io();
     this.photoById = new Map();
     this.maxPhotos = 300;
-    this.cellWidth = 240; // includes padding/margins
-    this.cellHeight = 280;
+    this.baseCellWidth = 240; // base cell size for scaling
+    this.baseCellHeight = 280;
+    this.scale = 1; // scaling factor
+    this.cellWidth = this.baseCellWidth * this.scale;
+    this.cellHeight = this.baseCellHeight * this.scale;
     this.gridCols = Math.max(1, Math.floor(window.innerWidth / this.cellWidth));
     this.gridRows = Math.max(1, Math.floor(window.innerHeight / this.cellHeight));
     this.occupied = new Set(); // key = r:c
@@ -18,10 +21,16 @@ class SmartWall {
 
   bindResize() {
     window.addEventListener('resize', () => {
-      this.gridCols = Math.max(1, Math.floor(window.innerWidth / this.cellWidth));
-      this.gridRows = Math.max(1, Math.floor(window.innerHeight / this.cellHeight));
-      // We don't reflow existing, but future placements adapt
+      this.updateGridDimensions();
+      this.optimizeZoomForAllPhotos();
     });
+  }
+
+  updateGridDimensions() {
+    this.cellWidth = this.baseCellWidth * this.scale;
+    this.cellHeight = this.baseCellHeight * this.scale;
+    this.gridCols = Math.max(1, Math.floor(window.innerWidth / this.cellWidth));
+    this.gridRows = Math.max(1, Math.floor(window.innerHeight / this.cellHeight));
   }
 
   bindControls() {
@@ -38,7 +47,7 @@ class SmartWall {
 
   initializeSocket() {
     console.log('Initializing socket connection in index...');
-    
+
     this.socket.on('connect', () => {
       console.log('Connected to wall with socket ID:', this.socket.id);
       this.updateUsers(1);
@@ -73,26 +82,101 @@ class SmartWall {
       const { success, photos } = await res.json();
       if (success && photos) {
         photos.forEach((p) => this.addPhoto({ img: `/api/photos/proxy/${p.driveId}`, caption: p.caption, driveId: p.driveId, isExisting: true }));
+        // After loading all photos, optimize zoom to fit them better
+        this.optimizeZoomForAllPhotos();
       }
     } catch { }
+  }
+
+  optimizeZoomForAllPhotos() {
+    const photoCount = this.wall.children.length;
+    const totalSlots = this.gridRows * this.gridCols;
+
+    // If we have more photos than 60% of available slots, zoom out
+    while (photoCount > totalSlots * 0.6 && this.scale > 0.4) {
+      console.log(`Optimizing zoom: ${photoCount} photos need more space than ${totalSlots} slots allow`);
+      this.zoomOut();
+    }
+  }
+
+  zoomOut() {
+    this.scale *= 0.85; // Slightly more aggressive than stage
+    if (this.scale < 0.4) this.scale = 0.4; // Prevent too small
+    this.updateGridDimensions();
+    this.repositionAllPhotos();
+  }
+
+  repositionAllPhotos() {
+    // Clear occupied slots and reposition all photos
+    this.occupied.clear();
+    const photos = Array.from(this.wall.children);
+
+    photos.forEach(card => {
+      const slot = this.findRandomFreeSlot();
+      if (slot) {
+        this.occupied.add(`${slot.r}:${slot.c}`);
+        const x = slot.c * this.cellWidth + 10; // padding
+        const y = slot.r * this.cellHeight + 10;
+        card.style.left = `${x}px`;
+        card.style.top = `${y}px`;
+
+        // Update card size based on new scale
+        const scaleFactor = `scale(${this.scale})`;
+        card.style.transform = `${scaleFactor} rotate(var(--rot, 0deg))`;
+      }
+    });
+  }
+
+  autoZoomIfNeeded() {
+    const photoCount = this.wall.children.length;
+    const totalSlots = this.gridRows * this.gridCols;
+    const occupancyRate = photoCount / totalSlots;
+
+    // If we're at 70% capacity or more, zoom out proactively
+    if (occupancyRate >= 0.7 && this.scale > 0.4) {
+      console.log(`Auto-zooming: ${photoCount} photos in ${totalSlots} slots (${(occupancyRate * 100).toFixed(1)}% full)`);
+      this.zoomOut();
+    }
   }
 
   addPhoto(data) {
     const driveId = data.driveId || (typeof data.img === 'string' ? data.img.split('/').pop() : undefined);
     if (driveId && this.photoById.has(driveId)) return;
 
+    // Check if we need to zoom out before adding photo
+    this.autoZoomIfNeeded();
+
     const slot = this.findRandomFreeSlot();
-    if (!slot) return; // no free slot; skip
-    this.occupied.add(`${slot.r}:${slot.c}`);
+    if (!slot) {
+      // No free slot, try to zoom out
+      this.zoomOut();
+      const newSlot = this.findRandomFreeSlot();
+      if (!newSlot) return; // Still no slot, skip
+      this.occupied.add(`${newSlot.r}:${newSlot.c}`);
+      const x = newSlot.c * this.cellWidth + 10;
+      const y = newSlot.r * this.cellHeight + 10;
+      this.createPhotoCard(data, x, y, driveId);
+    } else {
+      this.occupied.add(`${slot.r}:${slot.c}`);
+      const x = slot.c * this.cellWidth + 10; // padding
+      const y = slot.r * this.cellHeight + 10;
+      this.createPhotoCard(data, x, y, driveId);
+    }
 
-    const x = slot.c * this.cellWidth + 10; // padding
-    const y = slot.r * this.cellHeight + 10;
+    this.trimIfNeeded();
+    this.updateStats();
+  }
 
+  createPhotoCard(data, x, y, driveId) {
     const card = document.createElement('div');
     card.className = 'polaroid';
     card.style.left = `${x}px`;
     card.style.top = `${y}px`;
     card.style.setProperty('--rot', (Math.random() * 10 - 5).toFixed(2));
+
+    // Apply scaling transform
+    const scaleFactor = `scale(${this.scale})`;
+    card.style.transform = `${scaleFactor} rotate(var(--rot, 0deg))`;
 
     const img = document.createElement('img');
     img.src = data.img;
@@ -104,9 +188,6 @@ class SmartWall {
 
     this.wall.appendChild(card);
     if (driveId) this.photoById.set(driveId, card);
-
-    this.trimIfNeeded();
-    this.updateStats();
   }
 
   findRandomFreeSlot() {
@@ -127,7 +208,7 @@ class SmartWall {
     while (this.wall.children.length > this.maxPhotos) {
       const last = this.wall.lastElementChild;
       if (!last) break;
-      // free its slot
+      // free its slot using current scaled dimensions
       const left = parseInt(last.style.left || '0', 10);
       const top = parseInt(last.style.top || '0', 10);
       const c = Math.floor(left / this.cellWidth);

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<htm <!-- Social <!-- Your Photos Section -->
+  <section class="feed-section">
+    <h2>📷 Your Photos</h2>
+    <div id="userPhotos" class="photo-grid"></div>a Style Feed -->
+    <section class="feed-section main-feed">
+      <h2>🏠 Your Social Feed</h2>
+      <div id="socialFeed" class="social-feed"></div>
+      <div id="socialFeedLoading" class="loading">Loading your social feed...</div>g="en">
+
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Polaroid Wall - Feed</title>
+        <link rel="stylesheet" href="/feed.css">
+      </head>
+
+      <body>
+        <div class="feed-container">
+          <header class="feed-header">
+            <h1>📸 Your Feed</h1>
+            <div class="feed-stats">
+              <span id="feedCount">0 photos</span>
+            </div>
+          </header>
+
+          <div class="feed-sections">
+            <!-- Social Media Style Feed -->
+            <section class="feed-section main-feed">
+              <h2>� Your Social Feed</h2>
+              <div id="socialFeed" class="social-feed"></div>
+              <div id="socialFeedLoading" class="loading">Loading your social feed...</div>
+              <div id="socialFeedEmpty" class="empty-state" style="display: none;">
+                <p>Your feed is empty!</p>
+                <div class="feed-actions">
+                  <a href="/camera.html" class="cta-button">Take a Photo</a>
+                  <button id="findPeopleBtn" class="cta-button secondary">Find People to Follow</button>
+                </div>
+              </div>
+            </section>
+
+            <!-- Your Photos Section -->
+            <section class="feed-section">
+              <h2>� Your Photos</h2>
+              <div id="userPhotos" class="photo-grid"></div>
+              <div id="userPhotosLoading" class="loading">Loading your photos...</div>
+              <div id="userPhotosEmpty" class="empty-state" style="display: none;">
+                <p>You haven't uploaded any photos yet!</p>
+                <a href="/camera.html" class="cta-button">Take a Photo</a>
+              </div>
+            </section>
+
+            <!-- Suggested Users Section -->
+            <section class="feed-section" id="suggestedUsersSection" style="display: none;">
+              <h2>🔍 Suggested People</h2>
+              <div id="suggestedUsers" class="users-grid"></div>
+              <div id="suggestedUsersLoading" class="loading">Loading suggestions...</div>
+            </section>
+
+            <!-- Follow by Email Section -->
+            <section class="feed-section">
+              <h2>📧 Follow by Email</h2>
+              <div class="follow-by-email">
+                <div class="email-input-container">
+                  <input type="email" id="followEmailInput" placeholder="Enter email address to follow"
+                    class="email-input">
+                  <button id="followEmailBtn" class="follow-email-btn">Follow</button>
+                </div>
+                <div id="followEmailStatus" class="follow-status"></div>
+
+                <!-- List of people you're following -->
+                <div class="following-list">
+                  <h3>👥 People You Follow</h3>
+                  <div id="followingList" class="following-users"></div>
+                  <div id="followingListLoading" class="loading" style="display: none;">Loading...</div>
+                  <div id="followingListEmpty" class="empty-state" style="display: none;">
+                    <p>You're not following anyone yet</p>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <!-- Photo Modal -->
+          <div id="photoModal" class="modal" style="display: none;">
+            <div class="modal-content">
+              <span class="close">&times;</span>
+              <img id="modalImage" src="" alt="Full size photo">
+              <div class="modal-info">
+                <p id="modalCaption"></p>
+                <p id="modalUser"></p>
+                <div class="modal-actions">
+                  <button id="modalLikeBtn" class="like-btn">❤️ Like</button>
+                  <span id="modalLikeCount">0 likes</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div id="statusMessage" class="status-message"></div>
+        </div>
+
+        <script src="/nav.js"></script>
+        <script src="/feed.js" defer></script>
+      </body>
+
+      </html>

@@ -191,9 +191,108 @@ const unfollowUser = async (req, res) => {
   }
 };
 
+// Get users that the current user is following
+const getFollowingUsers = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const following = await prisma.follow.findMany({
+      where: { followerId: userId },
+      include: {
+        following: {
+          select: {
+            id: true,
+            email: true,
+            photoCount: true,
+            createdAt: true,
+            _count: {
+              select: {
+                followers: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const followingUsers = following.map(follow => ({
+      ...follow.following,
+      followedAt: follow.createdAt,
+    }));
+
+    return ApiSuccess(res, 'Following users retrieved successfully', followingUsers);
+  } catch (error) {
+    console.error('Get following users error:', error);
+    return ApiError(res, 'Error retrieving following users', HTTP_500_INTERNAL_SERVER_ERROR);
+  }
+};
+
+// Follow a user by email
+const followUserByEmail = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const followerId = req.user.id;
+
+    // Validate email format
+    if (!email || !email.includes('@')) {
+      return ApiError(res, 'Valid email address is required', HTTP_400_BAD_REQUEST);
+    }
+
+    // Find user by email
+    const userToFollow = await prisma.user.findUnique({
+      where: { email: email.toLowerCase().trim() },
+    });
+
+    if (!userToFollow) {
+      return ApiError(res, 'User with this email not found', HTTP_404_NOT_FOUND);
+    }
+
+    // Prevent following yourself
+    if (followerId === userToFollow.id) {
+      return ApiError(res, 'You cannot follow yourself', HTTP_400_BAD_REQUEST);
+    }
+
+    // Check if already following
+    const existingFollow = await prisma.follow.findUnique({
+      where: {
+        followerId_followingId: {
+          followerId,
+          followingId: userToFollow.id,
+        },
+      },
+    });
+
+    if (existingFollow) {
+      return ApiError(res, 'You are already following this user', HTTP_400_BAD_REQUEST);
+    }
+
+    // Create follow relationship
+    await prisma.follow.create({
+      data: {
+        followerId,
+        followingId: userToFollow.id,
+      },
+    });
+
+    return ApiSuccess(res, `Successfully followed ${userToFollow.email}`, {
+      followedUser: {
+        id: userToFollow.id,
+        email: userToFollow.email,
+        photoCount: userToFollow.photoCount,
+      },
+    });
+  } catch (error) {
+    console.error('Follow user by email error:', error);
+    return ApiError(res, 'Error following user', HTTP_500_INTERNAL_SERVER_ERROR);
+  }
+};
+
 module.exports = {
   getFeed,
   getSuggestedUsers,
   followUser,
   unfollowUser,
+  getFollowingUsers,
+  followUserByEmail,
 };

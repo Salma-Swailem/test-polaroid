@@ -13,6 +13,7 @@ class NavigationManager {
     const path = window.location.pathname;
     if (path.includes('camera')) return 'camera';
     if (path.includes('login')) return 'login';
+    if (path.includes('feed')) return 'feed';
     if (path.includes('qr')) return 'qr';
     if (path.includes('stage')) return 'stage';
     if (path.includes('admin')) return 'admin';
@@ -180,6 +181,7 @@ class NavigationManager {
     const basePages = [
       { name: 'wall', icon: '🏠', url: '/index.html', active: this.currentPage === 'wall' },
       { name: 'camera', icon: '📷', url: '/camera.html', active: this.currentPage === 'camera' },
+      { name: 'feed', icon: '📸', url: '/feed.html', active: this.currentPage === 'feed' },
       { name: 'qr', icon: '🔳', url: '/qr.html', active: this.currentPage === 'qr' },
       { name: 'login', icon: '🔐', url: '/login.html', active: this.currentPage === 'login' }
     ];

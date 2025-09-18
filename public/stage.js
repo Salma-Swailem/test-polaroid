@@ -12,6 +12,7 @@ class StageWall {
     this.occupiedSlots = new Set();
     this.initializeGrid();
     this.bindEvents();
+    this.initializeSocket();
     this.loadExistingPhotos();
   }
 
@@ -21,6 +22,8 @@ class StageWall {
     window.addEventListener('resize', () => {
       this.cols = Math.floor(window.innerWidth / this.cellSize);
       this.rows = Math.floor(window.innerHeight / this.cellSize);
+      // After resize, check if we need to optimize zoom
+      this.optimizeZoomForAllPhotos();
     });
   }
 
@@ -29,6 +32,42 @@ class StageWall {
       window.location.href = '/camera.html';
     });
     document.getElementById('exportBtn').addEventListener('click', () => this.exportWall());
+  }
+
+  initializeSocket() {
+    if (typeof io === 'undefined') {
+      console.log('Socket.IO not available, stage will work in polling mode');
+      return;
+    }
+
+    this.socket = io();
+    console.log('Initializing stage socket connection...');
+
+    this.socket.on('connect', () => {
+      console.log('Stage connected with socket ID:', this.socket.id);
+    });
+
+    this.socket.on('broadcast-photo', (data) => {
+      console.log('Received new photo on stage:', data);
+      this.addPhoto({
+        img: `/api/photos/proxy/${data.driveId}`,
+        caption: data.caption || '',
+        key: data.id
+      }, true);
+    });
+
+    this.socket.on('delete-photo', (data) => {
+      console.log('Photo deleted on stage:', data.id);
+      this.removePhoto(data.id);
+    });
+
+    this.socket.on('connect_error', (error) => {
+      console.error('Stage socket connection error:', error);
+    });
+
+    this.socket.on('disconnect', (reason) => {
+      console.log('Stage disconnected. Reason:', reason);
+    });
   }
 
   async loadExistingPhotos() {
@@ -43,6 +82,9 @@ class StageWall {
             key: photo.id // use unique DB ID
           }, false);
         });
+
+        // After loading all photos, check if we need to zoom out to fit everything
+        this.optimizeZoomForAllPhotos();
       }
       this.loading.style.display = 'none';
     } catch (err) {
@@ -51,8 +93,22 @@ class StageWall {
     }
   }
 
+  optimizeZoomForAllPhotos() {
+    const photoCount = this.photos.size;
+    const totalSlots = this.rows * this.cols;
+
+    // If we have more photos than 60% of available slots, zoom out to fit better
+    while (photoCount > totalSlots * 0.6 && this.scale > 0.4) {
+      console.log(`Optimizing zoom: ${photoCount} photos need more space than ${totalSlots} slots allow`);
+      this.zoomOut();
+    }
+  }
+
   addPhoto(data, isNew = false) {
     if (this.photos.has(data.key)) return;
+
+    // Check if we need to zoom out based on total photo count
+    this.autoZoomIfNeeded();
 
     let position = this.findRandomPosition();
     if (!position) {
@@ -68,6 +124,43 @@ class StageWall {
     this.photoKeys.push(data.key);
     this.occupiedSlots.add(`${position.row}:${position.col}`);
     this.limitPhotos();
+  }
+
+  autoZoomIfNeeded() {
+    const totalSlots = this.rows * this.cols;
+    const photoCount = this.photos.size;
+    const occupancyRate = photoCount / totalSlots;
+
+    // If we're at 70% capacity or more, zoom out proactively
+    if (occupancyRate >= 0.7 && this.scale > 0.4) {
+      console.log(`Auto-zooming: ${photoCount} photos in ${totalSlots} slots (${(occupancyRate * 100).toFixed(1)}% full)`);
+      this.zoomOut();
+    }
+  }
+
+  removePhoto(photoKey) {
+    if (!this.photos.has(photoKey)) return;
+
+    const element = this.photos.get(photoKey);
+    if (element) {
+      // Get position to free up the slot
+      const left = parseInt(element.style.left) || 0;
+      const top = parseInt(element.style.top) || 0;
+      const col = Math.floor(left / this.cellSize);
+      const row = Math.floor(top / this.cellSize);
+      this.occupiedSlots.delete(`${row}:${col}`);
+
+      // Remove from DOM and maps
+      element.remove();
+      this.photos.delete(photoKey);
+      this.photoDatas.delete(photoKey);
+
+      // Remove from keys array
+      const index = this.photoKeys.indexOf(photoKey);
+      if (index > -1) {
+        this.photoKeys.splice(index, 1);
+      }
+    }
   }
 
   findRandomPosition() {
@@ -228,7 +321,16 @@ class StageWall {
   async exportWall() {
     const photosData = Array.from(this.photoDatas.values());
     const numPhotos = photosData.length;
-    if (numPhotos === 0) return;
+    if (numPhotos === 0) {
+      alert('No photos to export!');
+      return;
+    }
+
+    // Show export options
+    const quality = await this.showExportOptions();
+    if (!quality) return; // User cancelled
+
+    const settings = this.getExportSettings(quality);
 
     // Load all images
     const loadedImages = await Promise.all(
@@ -243,14 +345,14 @@ class StageWall {
       )
     );
 
-    const exportScale = 2; // For high quality
+    const exportScale = settings.scale;
     const basePhotoWidth = 220 * exportScale;
     const basePhotoHeight = 280 * exportScale;
     const basePadding = 15 * exportScale;
     const baseImgWidth = basePhotoWidth - 2 * basePadding;
     const baseImgHeight = 200 * exportScale;
     const baseCaptionMargin = 12 * exportScale;
-    const baseFontSize = 16 * exportScale; // Approx 1rem
+    const baseFontSize = 16 * exportScale;
     const baseBorderRadius = 12 * exportScale;
     const imgBorderRadius = 8 * exportScale;
     const baseCaptionHeight = 40 * exportScale;
@@ -265,8 +367,15 @@ class StageWall {
     canvas.height = rows * cellSize;
     const ctx = canvas.getContext('2d');
 
-    // Background
-    ctx.fillStyle = '#ffffff';
+    // Enable high-quality rendering
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+
+    // Enhanced gradient background instead of white
+    const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+    gradient.addColorStop(0, '#667eea');
+    gradient.addColorStop(1, '#764ba2');
+    ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     // Draw each polaroid
@@ -279,9 +388,9 @@ class StageWall {
       ctx.save();
       ctx.translate(baseX, baseY);
 
-      // Shadow
-      ctx.shadowColor = 'rgba(0,0,0,0.3)';
-      ctx.shadowBlur = 20 * exportScale;
+      // Enhanced shadow
+      ctx.shadowColor = 'rgba(0,0,0,0.4)';
+      ctx.shadowBlur = 25 * exportScale;
       ctx.shadowOffsetX = 0;
       ctx.shadowOffsetY = 20 * exportScale;
 
@@ -348,22 +457,160 @@ class StageWall {
         ctx.restore();
       }
 
-      // Caption (no shadow for text)
+      // Enhanced caption rendering
       ctx.shadowColor = 'transparent'; // Disable shadow for text
-      ctx.font = `600 ${baseFontSize}px sans-serif`;
-      ctx.fillStyle = 'black';
+      ctx.font = `600 ${baseFontSize}px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif`;
+      ctx.fillStyle = '#2c3e50'; // Darker text for better readability
       ctx.textAlign = 'center';
-      const captionY = basePadding + baseImgHeight + baseCaptionMargin + (baseCaptionHeight / 2);
-      ctx.fillText(data.caption || 'No caption', basePhotoWidth / 2, captionY);
+      ctx.textBaseline = 'middle';
+
+      const captionText = data.caption || 'No caption';
+      const maxWidth = baseImgWidth - 20; // Leave some padding
+
+      // Word wrap for long captions
+      const words = captionText.split(' ');
+      let line = '';
+      const lines = [];
+
+      for (let n = 0; n < words.length; n++) {
+        const testLine = line + words[n] + ' ';
+        const metrics = ctx.measureText(testLine);
+        const testWidth = metrics.width;
+
+        if (testWidth > maxWidth && n > 0) {
+          lines.push(line);
+          line = words[n] + ' ';
+        } else {
+          line = testLine;
+        }
+      }
+      lines.push(line);
+
+      // Draw each line
+      const lineHeight = baseFontSize * 1.2;
+      const startY = basePadding + baseImgHeight + baseCaptionMargin + (lineHeight / 2);
+
+      lines.forEach((textLine, lineIndex) => {
+        const y = startY + (lineIndex * lineHeight);
+        ctx.fillText(textLine.trim(), basePhotoWidth / 2, y);
+      });
 
       ctx.restore();
     });
 
-    // Download
+    // Enhanced download with multiple formats
+    this.downloadCanvas(canvas, settings);
+  }
+
+  showExportOptions() {
+    return new Promise((resolve) => {
+      const modal = document.createElement('div');
+      modal.style.cssText = `position:fixed;inset:0;background:rgba(0,0,0,0.8);display:flex;align-items:center;justify-content:center;z-index:6000;`;
+
+      const content = document.createElement('div');
+      content.style.cssText = `background:white;padding:30px;border-radius:15px;text-align:center;max-width:400px;box-shadow:0 25px 50px rgba(0,0,0,0.3);`;
+
+      content.innerHTML = `
+        <h2 style="margin:0 0 20px 0;color:#2c3e50;">Export Options</h2>
+        <div style="margin:20px 0;">
+          <label style="display:block;margin:10px 0;cursor:pointer;">
+            <input type="radio" name="quality" value="standard" checked style="margin-right:8px;">
+            Standard Quality (2x scale)
+          </label>
+          <label style="display:block;margin:10px 0;cursor:pointer;">
+            <input type="radio" name="quality" value="high" style="margin-right:8px;">
+            High Quality (3x scale)
+          </label>
+          <label style="display:block;margin:10px 0;cursor:pointer;">
+            <input type="radio" name="quality" value="ultra" style="margin-right:8px;">
+            Ultra Quality (4x scale)
+          </label>
+        </div>
+        <div style="margin:20px 0;">
+          <label style="display:block;margin:10px 0;cursor:pointer;">
+            <input type="radio" name="format" value="png" checked style="margin-right:8px;">
+            PNG (Best Quality)
+          </label>
+          <label style="display:block;margin:10px 0;cursor:pointer;">
+            <input type="radio" name="format" value="jpeg" style="margin-right:8px;">
+            JPEG (Smaller Size)
+          </label>
+        </div>
+        <div style="margin-top:25px;">
+          <button id="exportConfirm" style="background:#667eea;color:white;border:none;padding:12px 24px;border-radius:8px;margin-right:10px;cursor:pointer;font-weight:600;">Export</button>
+          <button id="exportCancel" style="background:#95a5a6;color:white;border:none;padding:12px 24px;border-radius:8px;cursor:pointer;font-weight:600;">Cancel</button>
+        </div>
+      `;
+
+      modal.appendChild(content);
+      document.body.appendChild(modal);
+
+      document.getElementById('exportConfirm').onclick = () => {
+        const quality = document.querySelector('input[name="quality"]:checked').value;
+        const format = document.querySelector('input[name="format"]:checked').value;
+        modal.remove();
+        resolve({ quality, format });
+      };
+
+      document.getElementById('exportCancel').onclick = () => {
+        modal.remove();
+        resolve(null);
+      };
+
+      modal.onclick = (e) => {
+        if (e.target === modal) {
+          modal.remove();
+          resolve(null);
+        }
+      };
+    });
+  }
+
+  getExportSettings(options) {
+    const scaleMap = {
+      standard: 2,
+      high: 3,
+      ultra: 4
+    };
+
+    return {
+      scale: scaleMap[options.quality] || 2,
+      format: options.format || 'png'
+    };
+  }
+
+  downloadCanvas(canvas, settings) {
     const link = document.createElement('a');
-    link.download = 'polaroid_wall.png';
-    link.href = canvas.toDataURL('image/png');
+    const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+    const qualityName = Object.keys(this.getExportSettings({ quality: 'standard' }))
+      .find(key => this.getExportSettings({ quality: key }).scale === settings.scale) || 'custom';
+
+    link.download = `polaroid-wall-${qualityName}-${timestamp}.${settings.format}`;
+
+    if (settings.format === 'jpeg') {
+      link.href = canvas.toDataURL('image/jpeg', 0.95);
+    } else {
+      link.href = canvas.toDataURL('image/png');
+    }
+
     link.click();
+
+    // Show success message
+    this.showExportSuccess(settings);
+  }
+
+  showExportSuccess(settings) {
+    const toast = document.createElement('div');
+    toast.style.cssText = `position:fixed;top:20px;right:20px;background:#27ae60;color:white;padding:15px 25px;border-radius:8px;z-index:7000;box-shadow:0 4px 12px rgba(0,0,0,0.3);font-weight:600;`;
+    toast.textContent = `Exported successfully as ${settings.format.toUpperCase()}!`;
+
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transition = 'opacity 0.3s ease';
+      setTimeout(() => toast.remove(), 300);
+    }, 3000);
   }
 }
 

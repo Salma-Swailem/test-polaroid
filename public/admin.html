@@ -9,12 +9,8 @@
 </head>
 
 <body>
-  <div id="wall"></div>
-  <div id="loading" class="loading">Loading photos...</div>
-
   <div class="admin-panel">
     <h2 class="admin-title">📊 Admin Dashboard</h2>
-
     <div class="stats-grid">
       <div class="stat-item">
         <div class="stat-number" id="totalPhotos">0</div>
@@ -29,21 +25,17 @@
         <div class="stat-label">Today</div>
       </div>
     </div>
-
     <div class="admin-controls">
-      <button class="admin-btn primary" id="exportBtn">📸 Export High-Res Image</button>
-      <button class="admin-btn secondary" id="refreshBtn">🔄 Refresh Wall</button>
-      <button class="admin-btn success" id="stageBtn">🎭 View Stage</button>
+      <button id="refreshBtn" class="admin-btn success">Refresh List</button>
     </div>
-
     <div class="status-message" id="statusMessage"></div>
   </div>
+  <div id="photo-list" class="photo-list"></div>
+  <div id="loading" class="loading">Loading photos...</div>
 
   <script src="/socket.io/socket.io.js"></script>
-  <script>
-    // Verify Socket.IO is loaded
-    console.log('Socket.IO version:', io ? io.version : 'Not loaded!');
-  </script>
+  <script src="/nav.js"></script>
   <script src="/admin.js" defer></script>
+</body>
 
 </html>

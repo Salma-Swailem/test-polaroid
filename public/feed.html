@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Polaroid Wall - Feed</title>
+  <link rel="stylesheet" href="/feed.css">
+  <script src="nav.js" defer></script>
+</head>
+
+<body>
+  <div class="feed-container">
+    <header class="feed-header">
+      <h1>📸 Your Feed</h1>
+      <div class="feed-stats">
+        <span id="feedCount">0 photos</span>
+      </div>
+    </header>
+
+    <section class="feed-section">
+      <div class="feed-sections">
+        <!-- Social Media Style Feed -->
+        <section class="feed-section main-feed">
+          <h2>🏠 Your Social Feed</h2>
+          <div id="socialFeed" class="social-feed"></div>
+          <div id="socialFeedLoading" class="loading">Loading your social feed...</div>
+          <div id="socialFeedEmpty" class="empty-state" style="display: none;">
+            <div class="empty-icon">📷</div>
+            <h3>Your feed is empty!</h3>
+            <p>Follow some people or take photos to see content here.</p>
+            <div class="feed-actions">
+              <a href="/camera.html" class="cta-button">📷 Take a Photo</a>
+              <button id="findPeopleBtn" class="cta-button secondary">👥 Find People</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Follow by Email Section -->
+        <section class="feed-section">
+          <h2>📧 Follow by Email</h2>
+          <div class="follow-by-email">
+            <div class="email-input-container">
+              <input type="email" id="followEmailInput" placeholder="Enter email address to follow" class="email-input">
+              <button id="followEmailBtn" class="follow-email-btn">Follow</button>
+            </div>
+            <div id="followEmailStatus" class="follow-status"></div>
+          </div>
+
+          <!-- List of people you're following -->
+          <div class="following-list">
+            <h3>👥 People You Follow</h3>
+            <div id="followingList" class="following-users"></div>
+            <div id="followingListLoading" class="loading" style="display: none;">Loading...</div>
+            <div id="followingListEmpty" class="empty-state" style="display: none;">
+              <p>You're not following anyone yet</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Suggested Users Section -->
+        <section class="feed-section" id="suggestedUsersSection" style="display: none;">
+          <h2>� People You May Know</h2>
+          <div id="suggestedUsers" class="suggested-users"></div>
+          <div id="suggestedUsersLoading" class="loading">Loading suggestions...</div>
+          <div id="suggestedUsersEmpty" class="empty-state" style="display: none;">
+            <p>No suggestions available at the moment.</p>
+          </div>
+        </section>
+      </div>
+    </section>
+  </div>
+
+  <!-- Photo Modal -->
+  <div id="photoModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <img id="modalImage" src="" alt="Full size photo">
+      <div class="modal-info">
+        <p id="modalCaption"></p>
+        <p id="modalUser"></p>
+        <div class="modal-actions">
+          <button id="modalLikeBtn" class="like-btn">❤️ Like</button>
+          <span id="modalLikeCount">0 likes</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- User Profile Modal -->
+  <div id="userModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <span class="close" id="closeUserModal">&times;</span>
+      <div class="user-profile">
+        <div class="user-avatar large" id="modalUserAvatar">👤</div>
+        <h3 id="modalUsername">Username</h3>
+        <div class="user-stats">
+          <span id="modalUserPhotos">0 photos</span>
+          <span id="modalUserFollowers">0 followers</span>
+          <span id="modalUserFollowing">0 following</span>
+        </div>
+        <button id="modalFollowBtn" class="follow-btn">Follow</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Status Messages -->
+  <div id="statusMessage" class="status-message" style="display: none;"></div>
+
+  <script src="/nav.js"></script>
+  <script src="/feed.js" defer></script>
+</body>
+
+</html>

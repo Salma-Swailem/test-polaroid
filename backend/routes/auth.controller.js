@@ -23,6 +23,9 @@ async function registerOrLogin(req, res) {
     if (!user) {
       user = await prisma.user.create({ data: { email } });
     }
+    if (user.isBlocked) {
+      return ApiError(res, "User is blocked", HTTP_400_BAD_REQUEST);
+    }
 
     // Generate OTP
     const otpCode = generateOTP();
@@ -103,4 +106,40 @@ async function userInfo(req, res) {
     return ApiError(res, "Something went wrong", HTTP_500_INTERNAL_SERVER_ERROR);
   }
 }
-module.exports = { registerOrLogin, verifyOtp, userInfo };
+async function blockUser(req, res) {
+  try {
+    const { userId, action } = req.body;   // "block" or "unblock"
+
+    // Only admin can block users
+    if (req.user.role !== "admin") {
+      return ApiError(res, "Only admins can block/unblock users", HTTP_400_BAD_REQUEST);
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) return ApiError(res, "User not found", HTTP_400_BAD_REQUEST);
+
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: { isBlocked: action === "block" },
+    });
+
+    return ApiSuccess(
+      res,
+      {
+        message: `User ${action === "block" ? "blocked" : "unblocked"} successfully`,
+        user: {
+          id: updatedUser.id,
+          email: updatedUser.email,
+          isBlocked: updatedUser.isBlocked,
+          role: updatedUser.role,
+        },
+      },
+      HTTP_200_SUCCESS
+    );
+  } catch (err) {
+    console.error("blockUser error:", err);
+    return ApiError(res, "Something went wrong", HTTP_500_INTERNAL_SERVER_ERROR);
+  }
+}
+
+module.exports = { blockUser, registerOrLogin, verifyOtp, userInfo };
